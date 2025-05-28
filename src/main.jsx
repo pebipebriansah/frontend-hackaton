@@ -8,7 +8,7 @@ import App from './App.jsx'           // Halaman utama
 import LoginForm from './Login.jsx'   // Halaman login
 import RegisterForm from './Register.jsx' // Halaman register
 import Dashboard from './pages/Dashboard.jsx'
-import PriceRange from './pages/priceRange.jsx'
+import PriceRange from './pages/PriceRange/priceRange.jsx'
 import Layout from './pages/Layout.jsx'
 import CurahHujan from './pages/CurahHujan/CurahHujan.jsx'
 import DeteksiPenyakit from './pages/DeteksiPenyakit/DeteksiPenyakit.jsx'
