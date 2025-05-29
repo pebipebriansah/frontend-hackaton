@@ -8,6 +8,8 @@ export default function LoginForm() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [namaPetani, setNamaPetani] = useState('');
+  const [showModal, setShowModal] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -29,15 +31,22 @@ export default function LoginForm() {
 
       if (data.access_token) {
         localStorage.setItem('token', data.access_token);
+        localStorage.setItem('email', data.email);
+        localStorage.setItem('nama_petani', data.nama_petani);
+        setNamaPetani(data.nama_petani);
+        setShowModal(true); // Tampilkan modal
       }
 
-      alert('Login berhasil!');
-      navigate('/dashboard');
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    navigate('/dashboard');
   };
 
   return (
@@ -73,19 +82,12 @@ export default function LoginForm() {
         <h2 style={{ marginBottom: '1.5rem', color: '#333' }}>Login Petani</h2>
 
         {error && (
-          <p
-            role="alert"
-            style={{ color: 'red', marginBottom: '1rem', fontWeight: '600' }}
-          >
+          <p role="alert" style={{ color: 'red', marginBottom: '1rem', fontWeight: '600' }}>
             {error}
           </p>
         )}
 
-        <label htmlFor="email" style={{ display: 'none' }}>
-          Email
-        </label>
         <input
-          id="email"
           type="email"
           placeholder="Email"
           value={email}
@@ -105,11 +107,7 @@ export default function LoginForm() {
           disabled={loading}
         />
 
-        <label htmlFor="password" style={{ display: 'none' }}>
-          Password
-        </label>
         <input
-          id="password"
           type="password"
           placeholder="Password"
           value={password}
@@ -145,12 +143,6 @@ export default function LoginForm() {
             transition: 'background-color 0.3s ease',
             marginBottom: '1rem',
           }}
-          onMouseEnter={(e) => {
-            if (!loading) e.currentTarget.style.backgroundColor = '#2E7D32';
-          }}
-          onMouseLeave={(e) => {
-            if (!loading) e.currentTarget.style.backgroundColor = '#388E3C';
-          }}
         >
           {loading ? 'Memproses...' : 'Login'}
         </button>
@@ -165,6 +157,58 @@ export default function LoginForm() {
           </Link>
         </p>
       </form>
+
+      {/* Modal Selamat Datang */}
+      {showModal && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 9999,
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: 'white',
+              padding: '2rem',
+              borderRadius: '12px',
+              maxWidth: '400px',
+              textAlign: 'center',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
+            }}
+          >
+            <h3 style={{ marginBottom: '1rem', fontSize: '1.5rem' }}>
+              Selamat datang, <span style={{ color: '#388E3C' }}>{namaPetani}</span>!
+            </h3>
+            <p style={{ marginBottom: '1.5rem', color: '#555' }}>
+              Anda berhasil login ke sistem.
+            </p>
+            <button
+              onClick={handleCloseModal}
+              style={{
+                backgroundColor: '#388E3C',
+                color: 'white',
+                padding: '10px 20px',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontWeight: '600',
+              }}
+            >
+              Lanjut ke Dashboard
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
