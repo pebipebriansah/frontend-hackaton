@@ -6,12 +6,13 @@ import './index.css'
 
 import App from './App.jsx'           // Halaman utama
 import LoginForm from './Login.jsx'   // Halaman login
-import RegisterForm from './Register.jsx' // Halaman register
+import RegisterForm from './Register.jsx' //e Halaman register
 import Dashboard from './pages/Dashboard.jsx'
 import PriceRange from './pages/PriceRange.jsx'
 import Layout from './pages/Layout.jsx'
 import CurahHujan from './pages/CurahHujan/CurahHujan.jsx'
 import DeteksiPenyakit from './pages/DeteksiPenyakit/DeteksiPenyakit.jsx'
+import ProtectedRoute from './ProtectedRoutes.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -23,33 +24,42 @@ createRoot(document.getElementById('root')).render(
          <Route
           path="/dashboard"
           element={
+            <ProtectedRoute>
             <Layout>
               <Dashboard />
             </Layout>
+            </ProtectedRoute>
+            
           }
         />
         <Route
           path="/curahhujan"
           element={
+            <ProtectedRoute>
             <Layout>
               <CurahHujan />
             </Layout>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/price-range"
           element={
+            <ProtectedRoute>
             <Layout>
               <PriceRange hargaBulanIni={25000} />
             </Layout>
+            </ProtectedRoute>
           }
         />
           <Route
           path="/deteksi-penyakit"
           element={
+            <ProtectedRoute>
             <Layout>
               <DeteksiPenyakit />
             </Layout>
+            </ProtectedRoute>
           }
         />      
       </Routes>
