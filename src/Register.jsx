@@ -15,7 +15,7 @@ export default function Register() {
     setError(null);
     setPesan('');
     try {
-      const response = await fetch('http://localhost:8080/api/petani/register', {
+      const response = await fetch('https://backendpetani-h5hwb3dzaydhcbgr.eastasia-01.azurewebsites.net/petani/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
