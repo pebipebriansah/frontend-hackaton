@@ -35,7 +35,6 @@ export default function LoginForm() {
         localStorage.setItem('token', data.access_token);
         localStorage.setItem('email', data.email);
         localStorage.setItem('nama_petani', data.nama_petani);
-        localStorage.setItem('token', response.data.token);
         setNamaPetani(data.nama_petani);
         setShowModal(true); // Tampilkan modal
       }
