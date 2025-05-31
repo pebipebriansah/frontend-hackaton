@@ -19,41 +19,42 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
   }, []);
 
   const startListening = async () => {
-    setListening(true);
-    setRecognizedText('');
-    setRecommendation('');
+  setListening(true);
+  setRecognizedText('');
+  setRecommendation('');
 
-    const SpeechSDK = window.SpeechSDK;
-    const speechConfig = SpeechSDK.SpeechConfig.fromSubscription(
-      '2NJiSLaOf1eIrxW3bQrR7jT8DFvFr1cxt7us0ArGY00HL6cbBn8uJQQJ99BEAC3pKaRXJ3w3AAAYACOG1yNZ', // Ganti dengan kunci Azure Speech Anda
-      'eastasia'      // Ganti dengan region Azure Anda, contoh: 'eastasia'
-    );
-    speechConfig.speechRecognitionLanguage = 'id-ID';
-    const audioConfig = SpeechSDK.AudioConfig.fromDefaultMicrophoneInput();
-    const recognizer = new SpeechSDK.SpeechRecognizer(speechConfig, audioConfig);
+  const SpeechSDK = window.SpeechSDK;
+  const speechConfig = SpeechSDK.SpeechConfig.fromSubscription(
+    '2NJiSLaOf1eIrxW3bQrR7jT8DFvFr1cxt7us0ArGY00HL6cbBn8uJQQJ99BEAC3pKaRXJ3w3AAAYACOG1yNZ', // Ganti dengan kunci Azure Speech Anda
+    'eastasia'      // Ganti dengan region Azure Anda, contoh: 'eastasia'
+  );
+  speechConfig.speechRecognitionLanguage = 'id-ID';
+  const audioConfig = SpeechSDK.AudioConfig.fromDefaultMicrophoneInput();
+  const recognizer = new SpeechSDK.SpeechRecognizer(speechConfig, audioConfig);
 
-    recognizer.recognizeOnceAsync(async (result) => {
-      setListening(false);
-      if (result.reason === SpeechSDK.ResultReason.RecognizedSpeech) {
-        setRecognizedText(result.text);
+  recognizer.recognizeOnceAsync(async (result) => {
+    setListening(false);
+    if (result.reason === SpeechSDK.ResultReason.RecognizedSpeech) {
+      setRecognizedText(result.text);
 
-        const res = await fetch('https://backendpetani-h5hwb3dzaydhcbgr.eastasia-01.azurewebsites.net/rekomendasi/', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          },
-          body: JSON.stringify({ keluhan: result.text })
-        });
+      const res = await fetch('https://backendpetani-h5hwb3dzaydhcbgr.eastasia-01.azurewebsites.net/rekomendasi/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // hapus Authorization
+        },
+        body: JSON.stringify({ keluhan: result.text })
+      });
 
-        const data = await res.json();
-        setRecommendation(data.rekomendasi || 'Tidak ada rekomendasi ditemukan.');
-      } else {
-        setRecognizedText('Gagal mengenali suara.');
-      }
-      recognizer.close();
-    });
-  };
+      const data = await res.json();
+      setRecommendation(data.rekomendasi || 'Tidak ada rekomendasi ditemukan.');
+    } else {
+      setRecognizedText('Gagal mengenali suara.');
+    }
+    recognizer.close();
+  });
+};
+
 
   const getCurahHujanDesc = (value) => {
     if (value === 0) return 'tidak ada hujan';
