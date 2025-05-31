@@ -37,7 +37,7 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
     if (result.reason === SpeechSDK.ResultReason.RecognizedSpeech) {
       setRecognizedText(result.text);
 
-      const res = await fetch('https://backendpetani-h5hwb3dzaydhcbgr.eastasia-01.azurewebsites.net/rekomendasi/', {
+      const res = await fetch('https://backendpetani-h5hwb3dzaydhcbgr.eastasia-01.azurewebsites.net/rekomendasi/rekomendasi/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
