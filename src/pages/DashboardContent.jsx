@@ -1,18 +1,60 @@
-import { useState, useEffect } from 'react';
-import { Row, Col, Card } from 'react-bootstrap';
-import { Droplet, TrendingUp, TrendingDown } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Row, Col, Card, Button, Alert } from 'react-bootstrap';
+import { Droplet, Mic, TrendingUp, TrendingDown } from 'lucide-react';
 
 function DashboardContent({ lokasi, curahHujan, loading }) {
-  const [hargaBulanIni, setHargaBulanIni] = useState(0);
-  const [hargaBulanLalu, setHargaBulanLalu] = useState(0);
+  const [hargaBulanIni, setHargaBulanIni] = useState(25000);
+  const [hargaBulanLalu, setHargaBulanLalu] = useState(22000);
+  const [listening, setListening] = useState(false);
+  const [recognizedText, setRecognizedText] = useState('');
+  const [recommendation, setRecommendation] = useState('');
 
   useEffect(() => {
-    // Simulasi fetch data harga
-    setHargaBulanIni(25000);
-    setHargaBulanLalu(22000);
+    if (window.SpeechSDK === undefined) {
+      const script = document.createElement('script');
+      script.src = 'https://aka.ms/csspeech/jsbrowserpackageraw';
+      script.onload = () => console.log('Speech SDK loaded');
+      document.body.appendChild(script);
+    }
   }, []);
 
-  // Deskripsi curah hujan berdasarkan angka (mm)
+  const startListening = async () => {
+    setListening(true);
+    setRecognizedText('');
+    setRecommendation('');
+
+    const SpeechSDK = window.SpeechSDK;
+    const speechConfig = SpeechSDK.SpeechConfig.fromSubscription(
+      '2NJiSLaOf1eIrxW3bQrR7jT8DFvFr1cxt7us0ArGY00HL6cbBn8uJQQJ99BEAC3pKaRXJ3w3AAAYACOG1yNZ', // Ganti dengan kunci Azure Speech Anda
+      'eastasia'      // Ganti dengan region Azure Anda, contoh: 'eastasia'
+    );
+    speechConfig.speechRecognitionLanguage = 'id-ID';
+    const audioConfig = SpeechSDK.AudioConfig.fromDefaultMicrophoneInput();
+    const recognizer = new SpeechSDK.SpeechRecognizer(speechConfig, audioConfig);
+
+    recognizer.recognizeOnceAsync(async (result) => {
+      setListening(false);
+      if (result.reason === SpeechSDK.ResultReason.RecognizedSpeech) {
+        setRecognizedText(result.text);
+
+        const res = await fetch('https://backendpetani-h5hwb3dzaydhcbgr.eastasia-01.azurewebsites.net/rekomendasi', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify({ keluhan: result.text })
+        });
+
+        const data = await res.json();
+        setRecommendation(data.rekomendasi || 'Tidak ada rekomendasi ditemukan.');
+      } else {
+        setRecognizedText('Gagal mengenali suara.');
+      }
+      recognizer.close();
+    });
+  };
+
   const getCurahHujanDesc = (value) => {
     if (value === 0) return 'tidak ada hujan';
     if (value < 2.5) return 'hujan ringan';
@@ -20,10 +62,8 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
     return 'hujan lebat';
   };
 
-  // Ambil angka curah hujan dari string "12 mm", atau kalau loading tampilkan "Memuat..."
   let curahHujanDisplay = 'Memuat...';
   if (!loading && curahHujan !== null) {
-    // curahHujan diasumsikan dalam mm (angka), bisa juga string "12" atau "12 mm"
     let angkaCurah = typeof curahHujan === 'string' ? parseFloat(curahHujan) : curahHujan;
     if (isNaN(angkaCurah)) angkaCurah = 0;
     curahHujanDisplay = `${angkaCurah} mm (${getCurahHujanDesc(angkaCurah)})`;
@@ -88,6 +128,24 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
           </Col>
         ))}
       </Row>
+
+      <Card className="p-4" style={{ borderRadius: '18px', boxShadow: '0 6px 20px rgba(0,0,0,0.08)' }}>
+        <h4 className="mb-3">Input Suara Keluhan Petani</h4>
+        <Button variant="primary" onClick={startListening} disabled={listening}>
+          <Mic className="me-2" size={20} />
+          {listening ? 'Mendengarkan...' : 'Mulai Bicara'}
+        </Button>
+        {recognizedText && (
+          <Alert variant="info" className="mt-3">
+            <strong>Hasil Pengenalan Suara:</strong> {recognizedText}
+          </Alert>
+        )}
+        {recommendation && (
+          <Alert variant="success" className="mt-2">
+            <strong>Rekomendasi:</strong> {recommendation}
+          </Alert>
+        )}
+      </Card>
     </>
   );
 }
