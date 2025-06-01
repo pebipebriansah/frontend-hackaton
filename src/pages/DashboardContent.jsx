@@ -44,7 +44,7 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
           setFetchingRecommendation(true);
 
           try {
-            const res = await fetch('https://backendpetani-h5hwb3dzaydhcbgr.eastasia-01.azurewebsites.net/rekomendasi/rekomendasi/', {
+            const res = await fetch('https://backendpetani-h5hwb3dzaydhcbgr.eastasia-01.azurewebsites.net/rekomendasi/', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ keluhan: result.text }),
