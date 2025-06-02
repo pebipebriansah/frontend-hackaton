@@ -1,24 +1,41 @@
-
 import React, { useEffect, useState } from 'react';
-import { Container, Navbar, Nav, Button, Offcanvas, Form, Alert } from 'react-bootstrap';
+import {
+  Container,
+  Navbar,
+  Nav,
+  Button,
+  Offcanvas,
+  Form,
+  Alert,
+  Dropdown,
+} from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
 
 const API_KEY = '1c5b30d80951b00f89c53bf2d5edc088';
 
 function Layout({ children }) {
   const [showSidebar, setShowSidebar] = useState(false);
-  const [lokasi, setLokasi] = useState({ label: 'Menunggu GPS...', lat: null, lon: null });
+  const [lokasi, setLokasi] = useState({
+    label: 'Menunggu GPS...',
+    lat: null,
+    lon: null,
+  });
   const [curahHujan, setCurahHujan] = useState(null);
   const [loadingCuaca, setLoadingCuaca] = useState(false);
   const [error, setError] = useState(null);
   const [gpsAktif, setGpsAktif] = useState(false);
+
   const navigate = useNavigate();
 
   const toggleSidebar = () => setShowSidebar(!showSidebar);
 
+  // Misal nama user diambil dari localStorage, bisa disesuaikan
+  const namaUser = localStorage.getItem('nama_petani') || 'User';
+
   const handleLogout = () => {
     localStorage.removeItem('token');
-    navigate('../Login');
+    localStorage.removeItem('nama_petani');
+    navigate('/Login');
   };
 
   const getCurahHujan = async (lat, lon) => {
@@ -28,58 +45,59 @@ function Layout({ children }) {
       const res = await fetch(
         `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`
       );
+      if (!res.ok) throw new Error('Gagal mengambil data cuaca');
       const data = await res.json();
       const hariIni = new Date().toISOString().split('T')[0];
-      const dataHariIni = data.list.find(d => d.dt_txt.startsWith(hariIni));
+      const dataHariIni = data.list.find((d) => d.dt_txt.startsWith(hariIni));
       const rain = dataHariIni?.rain?.['3h'] || 0;
       setCurahHujan(rain);
     } catch (err) {
-      setError('Gagal mengambil data cuaca',err);
+      setError(err.message || 'Gagal mengambil data cuaca');
     } finally {
       setLoadingCuaca(false);
     }
   };
 
   const gunakanGPS = () => {
-  if (!navigator.geolocation) {
-    setError('Geolocation tidak didukung browser');
-    return;
-  }
-  navigator.geolocation.getCurrentPosition(
-    async (pos) => {
-      const { latitude, longitude } = pos.coords;
-      try {
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
-          {
-            headers: {
-              'User-Agent': 'PetaniCerdasApp/1.0 (contact@petanicerdas.com)',
-              'Accept-Language': 'id-ID,id;q=0.9,en;q=0.8',
-            },
-          }
-        );
-        const data = await res.json();
+    if (!navigator.geolocation) {
+      setError('Geolocation tidak didukung browser');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
+            {
+              headers: {
+                'User-Agent': 'PetaniCerdasApp/1.0 (contact@petanicerdas.com)',
+                'Accept-Language': 'id-ID,id;q=0.9,en;q=0.8',
+              },
+            }
+          );
+          if (!res.ok) throw new Error('Gagal mengambil alamat dari koordinat GPS');
+          const data = await res.json();
 
-        const address = data.address || {};
-        const label =
-          address.city ||
-          address.town ||
-          address.village ||
-          address.county ||
-          data.display_name ||
-          'Lokasi GPS';
+          const address = data.address || {};
+          const label =
+            address.city ||
+            address.town ||
+            address.village ||
+            address.county ||
+            data.display_name ||
+            'Lokasi GPS';
 
-        setLokasi({ label, lat: latitude, lon: longitude });
-        setGpsAktif(true);
-        setError(null);
-      } catch (err) {
-        setError('Gagal mengambil alamat dari koordinat GPS',err);
-      }
-    },
-    (err) => setError('Gagal mendapatkan GPS: ' + err.message)
-  );
-};
-
+          setLokasi({ label, lat: latitude, lon: longitude });
+          setGpsAktif(true);
+          setError(null);
+        } catch (err) {
+          setError(err.message || 'Gagal mengambil alamat dari koordinat GPS');
+        }
+      },
+      (err) => setError('Gagal mendapatkan GPS: ' + err.message)
+    );
+  };
 
   useEffect(() => {
     if (gpsAktif && lokasi.lat && lokasi.lon) {
@@ -98,58 +116,68 @@ function Layout({ children }) {
     <>
       {/* Navbar */}
       <Navbar
-  expand={false}
-  bg="light"
-  fixed="top"
-  style={{
-    boxShadow: '0 2px 8px rgb(0 0 0 / 0.1)',
-    backdropFilter: 'blur(10px)',
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    zIndex: 1040,
-  }}
->
-  <Container fluid className="d-flex align-items-center">
-    {/* Tombol Menu Sidebar */}
-    <Button variant="outline-success" onClick={toggleSidebar} className="me-3">
-      &#9776;
-    </Button>
-
-    {/* Nama App */}
-    <Navbar.Brand
-      className="fw-bold"
-      style={{ fontSize: '1.5rem', color: '#2E7D32', marginRight: '2rem' }}
-    >
-    Cengek
-    </Navbar.Brand>
-
-    {/* Spacer agar konten lain terdorong ke kanan */}
-    <div className="flex-grow-1" />
-
-    {/* Curah Hujan dan GPS Button */}
-    <Form className="d-flex align-items-center gap-2 me-4">
-      {curahHujan !== null && !loadingCuaca && (
-        <div style={{ fontSize: '0.9rem', fontWeight: '500', color: '#2e7d32' }}>
-          Curah hujan di <strong>{lokasi.label}</strong>: {getCurahHujanDesc(curahHujan)}
-        </div>
-      )}
-      <Button variant="outline-primary" size="sm" style={{ marginLeft: '1rem', marginRight: '1rem' }} onClick={gunakanGPS}>
-        Gunakan GPS
-      </Button>
-    </Form>
-
-    {/* Logout */}
-    <Nav className="me-3">
-      <Nav.Link
-        onClick={handleLogout}
-        className="text-danger fw-semibold"
-        style={{ cursor: 'pointer' }}
+        expand={false}
+        bg="light"
+        fixed="top"
+        style={{
+          boxShadow: '0 2px 8px rgb(0 0 0 / 0.1)',
+          backdropFilter: 'blur(10px)',
+          backgroundColor: 'rgba(255, 255, 255, 0.8)',
+          zIndex: 1040,
+        }}
       >
-        Logout
-      </Nav.Link>
-    </Nav>
-  </Container>
-</Navbar>
+        <Container fluid className="d-flex align-items-center">
+          {/* Tombol Menu Sidebar */}
+          <Button variant="outline-success" onClick={toggleSidebar} className="me-3">
+            &#9776;
+          </Button>
 
+          {/* Nama App */}
+          <Navbar.Brand
+            className="fw-bold"
+            style={{ fontSize: '1.5rem', color: '#2E7D32', marginRight: '2rem' }}
+          >
+            Cengek
+          </Navbar.Brand>
+
+          {/* Spacer agar konten lain terdorong ke kanan */}
+          <div className="flex-grow-1" />
+
+          {/* Curah Hujan dan GPS Button */}
+          <Form className="d-flex align-items-center gap-2 me-4">
+            {curahHujan !== null && !loadingCuaca && (
+              <div style={{ fontSize: '0.9rem', fontWeight: '500', color: '#2e7d32' }}>
+                Curah hujan di <strong>{lokasi.label}</strong>: {getCurahHujanDesc(curahHujan)}
+              </div>
+            )}
+            <Button
+              variant="outline-primary"
+              size="sm"
+              style={{ marginLeft: '1rem', marginRight: '1rem' }}
+              onClick={gunakanGPS}
+            >
+              Gunakan GPS
+            </Button>
+          </Form>
+
+          {/* Dropdown Nama User & Logout */}
+          <Dropdown align="end" className="me-3">
+            <Dropdown.Toggle
+              variant="outline-danger"
+              id="dropdown-basic"
+              style={{ fontWeight: '600', cursor: 'pointer' }}
+            >
+              {namaUser}
+            </Dropdown.Toggle>
+
+            <Dropdown.Menu>
+              <Dropdown.Item onClick={handleLogout} className="text-danger">
+                Logout
+              </Dropdown.Item>
+            </Dropdown.Menu>
+          </Dropdown>
+        </Container>
+      </Navbar>
 
       {/* Sidebar */}
       <Offcanvas
@@ -187,13 +215,13 @@ function Layout({ children }) {
         }}
       >
         <Container fluid>
-  {React.Children.map(children, child => {
-    if (React.isValidElement(child)) {
-      return React.cloneElement(child, { lokasi, curahHujan });
-    }
-    return child;
-  })}
-</Container>
+          {React.Children.map(children, (child) => {
+            if (React.isValidElement(child)) {
+              return React.cloneElement(child, { lokasi, curahHujan });
+            }
+            return child;
+          })}
+        </Container>
       </main>
 
       {/* Footer */}
