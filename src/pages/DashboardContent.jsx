@@ -45,28 +45,38 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
   };
 
   const sendCuacaToBackend = async (cuacaData) => {
-    setFetchingRecommendation(true);
-    setErrorMsg('');
-    setWeatherRecommendation('');
-    try {
-      const response = await fetch('https://backendpetani-h5hwb3dzaydhcbgr.eastasia-01.azurewebsites.net/cuaca/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(cuacaData),
-      });
+  setFetchingRecommendation(true);
+  setErrorMsg('');
+  setWeatherRecommendation('');
+  try {
+    const response = await fetch('https://backendpetani-h5hwb3dzaydhcbgr.eastasia-01.azurewebsites.net/cuaca/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cuacaData),
+    });
 
-      if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+    if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
 
-      const data = await response.json();
-      setWeatherRecommendation(data.rekomendasi || 'Tidak ada rekomendasi cuaca ditemukan.');
-    } catch (error) {
-      console.error('Fetch error:', error);
-      setErrorMsg('Gagal mengambil rekomendasi cuaca dari backend. Menampilkan rekomendasi lokal.');
-      setWeatherRecommendation(getRekomendasiCuaca(parseFloat(cuacaData.curah_hujan)));
-    } finally {
-      setFetchingRecommendation(false);
+    const data = await response.json();
+    setWeatherRecommendation(data.rekomendasi || 'Tidak ada rekomendasi cuaca ditemukan.');
+  } catch (error) {
+    console.warn('Gagal mengambil data dari backend, gunakan fallback lokal.',error);
+    // Tidak menampilkan pesan error, langsung beri fallback
+    const curah = parseFloat(cuacaData.curah_hujan);
+    if (curah > 7) {
+      setWeatherRecommendation(
+        'Hujan terus-menerus lebih dari 7 hari. Disarankan memberikan vitamin pada tanaman agar tidak stres dan tetap sehat.'
+      );
+    } else {
+      setWeatherRecommendation(
+        'Curah hujan belum melebihi 7 hari berturut-turut, kondisi cuaca masih aman.'
+      );
     }
-  };
+  } finally {
+    setFetchingRecommendation(false);
+  }
+};
+
 
   useEffect(() => {
     if (loading || curahHujan == null || !lokasi) return;
