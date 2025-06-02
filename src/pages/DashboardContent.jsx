@@ -5,15 +5,19 @@ import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 
 function DashboardContent({ lokasi, curahHujan, loading }) {
-  const [hargaBulanIni, setHargaBulanIni] = useState(25000);
-  const [hargaBulanLalu, setHargaBulanLalu] = useState(22000);
+  // Ganti ini sesuai data user kamu / session
+  const idPetani = 1;
+
+  const [hargaBulanIni] = useState(25000);
+  const [hargaBulanLalu] = useState(22000);
+
   const [listening, setListening] = useState(false);
   const [recognizedText, setRecognizedText] = useState('');
   const [recommendation, setRecommendation] = useState('');
   const [fetchingRecommendation, setFetchingRecommendation] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Muat Speech SDK
+  // Muat Speech SDK sekali saat mount
   useEffect(() => {
     if (!window.SpeechSDK) {
       const script = document.createElement('script');
@@ -24,43 +28,69 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
     }
   }, []);
 
-  // Fungsi fetch rekomendasi cuaca otomatis berdasarkan curah hujan
-  const fetchWeatherRecommendation = async () => {
-    if (curahHujan == null || loading) return;
+  // Fungsi deskripsi curah hujan
+  const getCurahHujanDesc = (value) => {
+    if (value === 0) return 'tidak ada hujan';
+    if (value < 2.5) return 'hujan ringan';
+    if (value < 7.6) return 'hujan sedang';
+    return 'hujan lebat';
+  };
+
+  // Fungsi rekomendasi cuaca lokal berdasarkan curah hujan (fallback)
+  const getRekomendasiCuaca = (curah) => {
+    if (curah > 7) {
+      return (
+        'Rekomendasi Cuaca: Hujan terus-menerus lebih dari 7 hari. ' +
+        'Disarankan memberikan vitamin pada tanaman agar tidak stres dan tetap sehat.'
+      );
+    }
+    return 'Cuaca normal, tidak perlu tindakan khusus.';
+  };
+
+  // Fungsi kirim data cuaca ke backend FastAPI dan ambil rekomendasi
+  const sendCuacaToBackend = async (cuacaData) => {
     setFetchingRecommendation(true);
     setErrorMsg('');
     setRecommendation('');
-
     try {
-      const response = await fetch(
-        'https://backendpetani-h5hwb3dzaydhcbgr.eastasia-01.azurewebsites.net/rekomendasi/',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            keluhan: `Curah hujan saat ini adalah ${curahHujan} mm (${getCurahHujanDesc(curahHujan)})`,
-          }),
-        }
-      );
+      const response = await fetch('https://backendpetani-h5hwb3dzaydhcbgr.eastasia-01.azurewebsites.net/cuaca/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(cuacaData),
+      });
 
       if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
 
       const data = await response.json();
-      setRecommendation(data.rekomendasi || 'Tidak ada rekomendasi cuaca ditemukan.');
+      // backend sudah kirim rekomendasi di field `rekomendasi`
+      setRecommendation(data.rekomendasi || 'Tidak ada rekomendasi ditemukan.');
     } catch (error) {
       console.error('Fetch error:', error);
-      setErrorMsg('Gagal mengambil rekomendasi cuaca. Silakan coba lagi.');
+      setErrorMsg('Gagal mengambil rekomendasi dari backend. Menampilkan rekomendasi lokal.');
+      // fallback ke rekomendasi lokal
+      setRecommendation(getRekomendasiCuaca(parseFloat(cuacaData.curah_hujan)));
     } finally {
       setFetchingRecommendation(false);
     }
   };
 
-  // useEffect untuk rekomendasi cuaca otomatis ketika curah hujan berubah
+  // useEffect untuk otomatis kirim data cuaca ke backend setiap curahHujan dan lokasi berubah (dan bukan loading)
   useEffect(() => {
-    fetchWeatherRecommendation();
-  }, [curahHujan, loading]);
+    if (loading || curahHujan == null || !lokasi) return;
 
-  // Fungsi fetch rekomendasi dari hasil speech-to-text
+    const cuacaData = {
+      id_petani: idPetani,
+      lokasi: lokasi.label || lokasi,
+      latitude: lokasi.latitude || 0,    // pastikan props lokasi punya latitude, longitude
+      longitude: lokasi.longitude || 0,
+      curah_hujan: parseFloat(curahHujan),
+      created_at: new Date().toISOString(),
+    };
+
+    sendCuacaToBackend(cuacaData);
+  }, [curahHujan, lokasi, loading]);
+
+  // Fungsi fetch rekomendasi dari hasil speech-to-text (fetch ke backend OpenAI)
   const fetchSpeechRecommendation = async (text) => {
     setFetchingRecommendation(true);
     setErrorMsg('');
@@ -88,7 +118,7 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
     }
   };
 
-  // Fungsi mulai mendengarkan suara
+  // Fungsi mulai mendengarkan suara dan proses speech to text
   const startListening = async () => {
     setListening(true);
     setRecognizedText('');
@@ -127,16 +157,9 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
     }
   };
 
-  const getCurahHujanDesc = (value) => {
-    if (value === 0) return 'tidak ada hujan';
-    if (value < 2.5) return 'hujan ringan';
-    if (value < 7.6) return 'hujan sedang';
-    return 'hujan lebat';
-  };
-
   const curahHujanDisplay =
     !loading && curahHujan != null
-      ? `${parseFloat(curahHujan || 0)} mm (${getCurahHujanDesc(parseFloat(curahHujan || 0))})`
+      ? `${parseFloat(curahHujan)} mm (${getCurahHujanDesc(parseFloat(curahHujan))})`
       : 'Memuat...';
 
   const cards = [
@@ -174,28 +197,15 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
                 style={{
                   borderRadius: '18px',
                   backgroundColor: card.color,
-                  cursor: 'pointer',
-                  transition: 'transform 0.3s, box-shadow 0.3s',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-8px)';
-                  e.currentTarget.style.boxShadow = '0 12px 30px rgba(0,0,0,0.2)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.08)';
+                  cursor: 'default',
                 }}
               >
-                <Card.Body>
-                  <div className="d-flex align-items-center gap-3 mb-3">
-                    {card.icon}
-                    <Card.Title className="fw-semibold m-0" style={{ fontSize: '1.3rem' }}>
-                      {card.title}
-                    </Card.Title>
+                <Card.Body className="d-flex align-items-center gap-3">
+                  <div>{card.icon}</div>
+                  <div>
+                    <Card.Title className="fs-5 fw-semibold">{card.title}</Card.Title>
+                    <Card.Text className="fs-4 fw-bold">{card.value}</Card.Text>
                   </div>
-                  <Card.Text className="fw-bold" style={{ fontSize: '1.9rem', color: '#333' }}>
-                    {card.value}
-                  </Card.Text>
                 </Card.Body>
               </Card>
             </Col>
@@ -203,82 +213,51 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
         </Row>
       </Card>
 
-      {/* Input Suara dan Rekomendasi */}
-      <Card
-        className="mx-auto shadow-sm"
-        style={{
-          maxWidth: '600px',
-          borderRadius: '18px',
-          padding: '2rem 2.5rem',
-          backgroundColor: '#fefefe',
-          boxShadow: '0 8px 25px rgba(0,0,0,0.1)',
-        }}
-      >
-        <h4 className="mb-4 fw-semibold text-center text-primary">Input Suara Keluhan Petani</h4>
+      {/* Tombol dan Info Speech Recognition */}
+      <Card className="mb-5 p-4 shadow-sm" style={{ borderRadius: '18px' }}>
+        <h2 className="mb-4 fw-bold text-center">Rekomendasi Tanaman</h2>
 
-        <div className="d-flex justify-content-center mb-4">
+        <div className="text-center mb-3">
           <Button
-            variant={listening ? 'danger' : 'primary'}
             onClick={startListening}
-            disabled={listening || fetchingRecommendation}
-            style={{ minWidth: '180px', fontWeight: '600', fontSize: '1.1rem' }}
+            disabled={listening}
+            className="btn-lg btn-success rounded-pill px-4"
+            aria-label="Mulai rekam suara untuk rekomendasi"
           >
-            <Mic className="me-2" size={22} />
-            {listening ? 'Mendengarkan...' : fetchingRecommendation ? 'Memproses...' : 'Mulai Bicara'}
+            {listening ? (
+              <>
+                <Spinner animation="border" size="sm" /> Mendengarkan...
+              </>
+            ) : (
+              <>
+                <Mic size={18} className="mb-1" /> Mulai Bicara
+              </>
+            )}
           </Button>
         </div>
 
         {recognizedText && (
-          <Alert
-            variant={recognizedText.startsWith('Gagal') ? 'danger' : 'info'}
-            className="mb-3"
-            style={{
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-word',
-              fontSize: '1rem',
-              borderRadius: '12px',
-              userSelect: 'text',
-            }}
-          >
-            <strong>Hasil Pengenalan Suara:</strong>
-            <br />
-            {recognizedText}
+          <Alert variant="info" className="text-center fs-6">
+            <strong>Keluhan Anda:</strong> {recognizedText}
           </Alert>
         )}
 
         {fetchingRecommendation && (
-          <div className="text-center mb-3">
-            <Spinner animation="border" variant="primary" />
-            <div className="mt-2 fw-semibold text-primary">Mengambil rekomendasi...</div>
+          <div className="text-center my-3">
+            <Spinner animation="border" size="sm" /> Mengambil rekomendasi...
           </div>
         )}
 
-        {errorMsg && (
-          <Alert variant="danger" className="mb-3">
-            {errorMsg}
-          </Alert>
+        {recommendation && !fetchingRecommendation && (
+          <Card className="p-3 mt-3 shadow-sm" style={{ borderRadius: '18px' }}>
+            <ReactMarkdown rehypePlugins={[rehypeRaw]}>{recommendation}</ReactMarkdown>
+          </Card>
         )}
 
-        {recommendation && !fetchingRecommendation && (
-          <Card
-            className="mb-0 p-3"
-            style={{
-              maxHeight: '320px',
-              overflowY: 'auto',
-              fontSize: '1rem',
-              lineHeight: '1.6',
-              borderRadius: '12px',
-              backgroundColor: '#e6f4ea',
-              color: '#2e4a1f',
-              border: '1px solid #a3c293',
-              userSelect: 'text',
-            }}
-          >
-            <strong>Rekomendasi:</strong>
-            <div style={{ marginTop: '0.5rem' }}>
-              <ReactMarkdown rehypePlugins={[rehypeRaw]}>{recommendation}</ReactMarkdown>
-            </div>
-          </Card>
+        {errorMsg && (
+          <Alert variant="danger" className="mt-3">
+            {errorMsg}
+          </Alert>
         )}
       </Card>
     </Container>
