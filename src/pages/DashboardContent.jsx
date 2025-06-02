@@ -10,6 +10,8 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
   const [hargaBulanIni, setHargaBulanIni] = useState(null);
   const [hargaBulanLalu, setHargaBulanLalu] = useState(null);
   const [hargaPrediksi, setHargaPrediksi] = useState(null);
+  const [meanSquaredError, setMeanSquaredError] = useState(null);
+
 
 
   const [listening, setListening] = useState(false);
@@ -54,11 +56,13 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
       if (!response.ok) throw new Error('Gagal mengambil data prediksi harga.');
 
       const data = await response.json();
-      setHargaPrediksi(data.harga_prediksi);
+      setHargaPrediksi(data.harga_bulan_depan); // Perubahan di sini
+      setMeanSquaredError(data.mean_squared_error);
     } catch (error) {
       console.error('Error saat fetch prediksi harga:', error);
-    }
+    }   
   };
+
   fetchPrediksiHarga();
 
   }, []);
@@ -211,12 +215,19 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
         {
           title: 'Prediksi Harga Bulan Depan',
           value: hargaPrediksi !== null
-            ? hargaPrediksi.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })
+            ? (
+                <>
+                  {hargaPrediksi.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })} <br />
+                  <span className="text-muted" style={{ fontSize: '0.9rem' }}>
+                    MSE: {meanSquaredError?.toLocaleString('id-ID', { maximumFractionDigits: 2 })}
+                  </span>
+                  <small className="text-muted">Perkiraan harga bulan depan berdasarkan data terkini.</small>
+                </>
+              )
             : 'Memuat...',
           icon: <TrendingUp size={32} className="text-warning" />,
           color: '#FFF3E0',
         },
-
       ];
 
   return (
