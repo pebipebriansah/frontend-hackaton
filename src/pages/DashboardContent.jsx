@@ -9,6 +9,8 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
 
   const [hargaBulanIni, setHargaBulanIni] = useState(null);
   const [hargaBulanLalu, setHargaBulanLalu] = useState(null);
+  const [hargaPrediksi, setHargaPrediksi] = useState(null);
+
 
   const [listening, setListening] = useState(false);
   const [recognizedText, setRecognizedText] = useState('');
@@ -43,6 +45,22 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
       }
     };
     fetchHargaCabai();
+
+    const fetchPrediksiHarga = async () => {
+    try {
+      const response = await fetch(
+        'https://backendpetani-h5hwb3dzaydhcbgr.eastasia-01.azurewebsites.net/harga/harga/prediksi'
+      );
+      if (!response.ok) throw new Error('Gagal mengambil data prediksi harga.');
+
+      const data = await response.json();
+      setHargaPrediksi(data.harga_prediksi);
+    } catch (error) {
+      console.error('Error saat fetch prediksi harga:', error);
+    }
+  };
+  fetchPrediksiHarga();
+
   }, []);
 
   const getCurahHujanDesc = (value) => {
@@ -190,6 +208,15 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
           icon: <TrendingDown size={32} className="text-danger" />,
           color: '#FFEBEE',
         },
+        {
+          title: 'Prediksi Harga Bulan Depan',
+          value: hargaPrediksi !== null
+            ? hargaPrediksi.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })
+            : 'Memuat...',
+          icon: <TrendingUp size={32} className="text-warning" />,
+          color: '#FFF3E0',
+        },
+
       ];
 
   return (
