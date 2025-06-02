@@ -12,10 +12,11 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
   const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
-    if (window.SpeechSDK === undefined) {
+    if (!window.SpeechSDK) {
       const script = document.createElement('script');
       script.src = 'https://aka.ms/csspeech/jsbrowserpackageraw';
       script.onload = () => console.log('Speech SDK loaded');
+      script.onerror = () => setErrorMsg('Gagal memuat Speech SDK.');
       document.body.appendChild(script);
     }
   }, []);
@@ -29,11 +30,16 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
 
     try {
       const SpeechSDK = window.SpeechSDK;
+      if (!SpeechSDK) {
+        throw new Error('Speech SDK belum tersedia.');
+      }
+
       const speechConfig = SpeechSDK.SpeechConfig.fromSubscription(
         '2NJiSLaOf1eIrxW3bQrR7jT8DFvFr1cxt7us0ArGY00HL6cbBn8uJQQJ99BEAC3pKaRXJ3w3AAAYACOG1yNZ',
         'eastasia'
       );
       speechConfig.speechRecognitionLanguage = 'id-ID';
+
       const audioConfig = SpeechSDK.AudioConfig.fromDefaultMicrophoneInput();
       const recognizer = new SpeechSDK.SpeechRecognizer(speechConfig, audioConfig);
 
@@ -44,28 +50,37 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
           setFetchingRecommendation(true);
 
           try {
-            const res = await fetch('https://backendpetani-h5hwb3dzaydhcbgr.eastasia-01.azurewebsites.net/rekomendasi/', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ keluhan: result.text }),
-            });
-            if (!res.ok) throw new Error(`Server error: ${res.status}`);
-            const data = await res.json();
+            const response = await fetch(
+              'https://backendpetani-h5hwb3dzaydhcbgr.eastasia-01.azurewebsites.net/rekomendasi/',
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ keluhan: result.text }),
+              }
+            );
+
+            if (!response.ok) {
+              throw new Error(`HTTP error: ${response.status}`);
+            }
+
+            const data = await response.json();
             setRecommendation(data.rekomendasi || 'Tidak ada rekomendasi ditemukan.');
-          } catch (fetchError) {
-            setRecommendation('');
-            setErrorMsg('Gagal mengambil rekomendasi. Silakan coba lagi.',fetchError);
+          } catch (error) {
+            console.error('Fetch error:', error);
+            setErrorMsg('Gagal mengambil rekomendasi. Silakan coba lagi.');
           } finally {
             setFetchingRecommendation(false);
           }
         } else {
           setRecognizedText('Gagal mengenali suara.');
         }
+
         recognizer.close();
       });
-    } catch (e) {
+    } catch (err) {
+      console.error('Speech recognition error:', err);
       setListening(false);
-      setErrorMsg('Error saat memulai pengenalan suara. Pastikan mikrofon berfungsi.',e);
+      setErrorMsg('Gagal memulai pengenalan suara. Periksa koneksi dan mikrofon Anda.');
     }
   };
 
@@ -76,12 +91,9 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
     return 'hujan lebat';
   };
 
-  let curahHujanDisplay = 'Memuat...';
-  if (!loading && curahHujan !== null) {
-    let angkaCurah = typeof curahHujan === 'string' ? parseFloat(curahHujan) : curahHujan;
-    if (isNaN(angkaCurah)) angkaCurah = 0;
-    curahHujanDisplay = `${angkaCurah} mm (${getCurahHujanDesc(angkaCurah)})`;
-  }
+  const curahHujanDisplay = !loading && curahHujan != null
+    ? `${parseFloat(curahHujan || 0)} mm (${getCurahHujanDesc(parseFloat(curahHujan || 0))})`
+    : 'Memuat...';
 
   const cards = [
     {
@@ -107,6 +119,7 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
   return (
     <>
       <h1 className="mb-4 fw-bold text-success text-center">Dashboard Petani</h1>
+
       <Row className="g-4 mb-4">
         {cards.map((card, idx) => (
           <Col key={idx} md={4}>
@@ -116,7 +129,7 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
                 borderRadius: '18px',
                 backgroundColor: card.color,
                 cursor: 'pointer',
-                transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                transition: 'transform 0.3s, box-shadow 0.3s',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-8px)';
@@ -124,7 +137,7 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.08)';
+                e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.08)';
               }}
             >
               <Card.Body>
@@ -162,11 +175,14 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
             style={{ minWidth: '160px', fontWeight: '600', fontSize: '1.1rem' }}
           >
             <Mic className="me-2" size={22} />
-            {listening ? 'Mendengarkan...' : fetchingRecommendation ? 'Memproses...' : 'Mulai Bicara'}
+            {listening
+              ? 'Mendengarkan...'
+              : fetchingRecommendation
+              ? 'Memproses...'
+              : 'Mulai Bicara'}
           </Button>
         </div>
 
-        {/* Hasil Pengenalan Suara */}
         {recognizedText && (
           <Alert
             variant={recognizedText.startsWith('Gagal') ? 'danger' : 'info'}
@@ -175,18 +191,16 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
               whiteSpace: 'pre-wrap',
               wordBreak: 'break-word',
               fontSize: '1rem',
-              lineHeight: '1.4',
               borderRadius: '12px',
-              boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
               userSelect: 'text',
             }}
           >
-            <strong>Hasil Pengenalan Suara:</strong> <br />
+            <strong>Hasil Pengenalan Suara:</strong>
+            <br />
             {recognizedText}
           </Alert>
         )}
 
-        {/* Loading Spinner */}
         {fetchingRecommendation && (
           <div className="text-center mb-3">
             <Spinner animation="border" variant="primary" />
@@ -194,14 +208,12 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
           </div>
         )}
 
-        {/* Error Message */}
         {errorMsg && (
           <Alert variant="danger" className="mb-3">
             {errorMsg}
           </Alert>
         )}
 
-        {/* Rekomendasi */}
         {recommendation && !fetchingRecommendation && (
           <Card
             className="mb-3 p-3"
@@ -213,7 +225,6 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
               fontSize: '1rem',
               lineHeight: '1.5',
               borderRadius: '12px',
-              boxShadow: '0 2px 12px rgba(0,0,0,0.12)',
               backgroundColor: '#e6f4ea',
               color: '#2e4a1f',
               border: '1px solid #a3c293',
