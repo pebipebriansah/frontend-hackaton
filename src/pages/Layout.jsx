@@ -27,30 +27,44 @@ function Layout({ children }) {
 
   const navigate = useNavigate();
 
-  const toggleSidebar = () => setShowSidebar(!showSidebar);
+  const toggleSidebar = () => setShowSidebar((prev) => !prev);
 
-  // Misal nama user diambil dari localStorage, bisa disesuaikan
+  // Ambil data user dan id_petani dari localStorage (session)
   const namaUser = localStorage.getItem('nama_petani') || 'User';
+  const idPetani = localStorage.getItem('id_petani');
 
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('nama_petani');
+    localStorage.removeItem('id_petani');
     navigate('/Login');
   };
 
+  // Fungsi untuk mengambil data curah hujan dari OpenWeatherMap
   const getCurahHujan = async (lat, lon) => {
     if (!lat || !lon) return;
     try {
       setLoadingCuaca(true);
+      setError(null);
       const res = await fetch(
         `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`
       );
       if (!res.ok) throw new Error('Gagal mengambil data cuaca');
       const data = await res.json();
+
       const hariIni = new Date().toISOString().split('T')[0];
+      // Cari data cuaca hari ini
       const dataHariIni = data.list.find((d) => d.dt_txt.startsWith(hariIni));
       const rain = dataHariIni?.rain?.['3h'] || 0;
+
       setCurahHujan(rain);
+
+      // Setelah data curah hujan didapat, simpan ke backend
+      if (idPetani) {
+        await simpanDataCuaca(rain, lat, lon, lokasi.label);
+      } else {
+        console.warn('id_petani tidak ditemukan di localStorage');
+      }
     } catch (err) {
       setError(err.message || 'Gagal mengambil data cuaca');
     } finally {
@@ -58,15 +72,57 @@ function Layout({ children }) {
     }
   };
 
+  // Fungsi menyimpan data cuaca ke backend
+  const simpanDataCuaca = async (rainValue, lat, lon, lokasiLabel) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Token tidak ditemukan, silakan login ulang');
+        return;
+      }
+
+      const tanggal = new Date().toISOString().split('T')[0];
+
+      const response = await fetch('http://localhost:8000/cengek/cuaca', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          id_petani: parseInt(idPetani, 10),
+          lokasi: lokasiLabel,
+          latitude: lat,
+          longitude: lon,
+          curah_hujan: rainValue,
+          tanggal,
+        }),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.message || 'Gagal menyimpan data cuaca');
+      }
+
+      // Optional: konfirmasi simpan berhasil
+      console.log('Data cuaca berhasil disimpan ke backend');
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  // Fungsi mengambil lokasi dengan GPS
   const gunakanGPS = () => {
     if (!navigator.geolocation) {
-      setError('Geolocation tidak didukung browser');
+      setError('Geolocation tidak didukung oleh browser Anda');
       return;
     }
+
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const { latitude, longitude } = pos.coords;
         try {
+          setError(null);
           const res = await fetch(
             `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
             {
@@ -90,7 +146,6 @@ function Layout({ children }) {
 
           setLokasi({ label, lat: latitude, lon: longitude });
           setGpsAktif(true);
-          setError(null);
         } catch (err) {
           setError(err.message || 'Gagal mengambil alamat dari koordinat GPS');
         }
@@ -99,12 +154,14 @@ function Layout({ children }) {
     );
   };
 
+  // Jika lokasi atau gpsAktif berubah, ambil data curah hujan
   useEffect(() => {
     if (gpsAktif && lokasi.lat && lokasi.lon) {
       getCurahHujan(lokasi.lat, lokasi.lon);
     }
-  }, [lokasi, gpsAktif]);
+  }, [gpsAktif, lokasi]);
 
+  // Fungsi untuk menerjemahkan nilai curah hujan ke deskripsi
   const getCurahHujanDesc = (value) => {
     if (value === 0) return 'tidak ada hujan';
     if (value < 2.5) return 'hujan ringan';
@@ -155,8 +212,9 @@ function Layout({ children }) {
               size="sm"
               style={{ marginLeft: '1rem', marginRight: '1rem' }}
               onClick={gunakanGPS}
+              disabled={loadingCuaca}
             >
-              Gunakan GPS
+              {loadingCuaca ? 'Memuat...' : 'Gunakan GPS'}
             </Button>
           </Form>
 
@@ -215,12 +273,9 @@ function Layout({ children }) {
         }}
       >
         <Container fluid>
-          {React.Children.map(children, (child) => {
-            if (React.isValidElement(child)) {
-              return React.cloneElement(child, { lokasi, curahHujan });
-            }
-            return child;
-          })}
+          {React.Children.map(children, (child) =>
+            React.isValidElement(child) ? React.cloneElement(child, { lokasi, curahHujan }) : child
+          )}
         </Container>
       </main>
 
