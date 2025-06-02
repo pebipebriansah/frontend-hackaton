@@ -28,7 +28,7 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
     const fetchHargaCabai = async () => {
       try {
         const response = await fetch(
-          'https://backendpetani-h5hwb3dzaydhcbgr.eastasia-01.azurewebsites.net/harga-cabai/'
+          'https://backendpetani-h5hwb3dzaydhcbgr.eastasia-01.azurewebsites.net/harga/harga/'
         );
 
         if (!response.ok) {
