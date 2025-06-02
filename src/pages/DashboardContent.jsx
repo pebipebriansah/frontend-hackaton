@@ -5,10 +5,10 @@ import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 
 function DashboardContent({ lokasi, curahHujan, loading }) {
-  const idPetani = 1;
+  const idPetani = localStorage.getItem('id_petani');
 
-  const [hargaBulanIni] = useState(25000);
-  const [hargaBulanLalu] = useState(22000);
+  const [hargaBulanIni, setHargaBulanIni] = useState(null);
+  const [hargaBulanLalu, setHargaBulanLalu] = useState(null);
 
   const [listening, setListening] = useState(false);
   const [recognizedText, setRecognizedText] = useState('');
@@ -25,6 +25,24 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
       script.onerror = () => setErrorMsg('Gagal memuat Speech SDK.');
       document.body.appendChild(script);
     }
+    const fetchHargaCabai = async () => {
+      try {
+        const response = await fetch(
+          'https://backendpetani-h5hwb3dzaydhcbgr.eastasia-01.azurewebsites.net/harga-cabai/'
+        );
+
+        if (!response.ok) {
+          throw new Error('Gagal mengambil data harga dari server.');
+        }
+
+        const data = await response.json();
+        setHargaBulanIni(data.harga_bulan_ini);
+        setHargaBulanLalu(data.harga_bulan_lalu);
+      } catch (error) {
+        console.error('Error saat fetch harga cabai:', error);
+      }
+    };
+    fetchHargaCabai();
   }, []);
 
   const getCurahHujanDesc = (value) => {
@@ -32,16 +50,6 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
     if (value < 2.5) return 'hujan ringan';
     if (value < 7.6) return 'hujan sedang';
     return 'hujan lebat';
-  };
-
-  const getRekomendasiCuaca = (curah) => {
-    if (curah > 7) {
-      return (
-        'Rekomendasi Cuaca: Hujan terus-menerus lebih dari 7 hari. ' +
-        'Disarankan memberikan vitamin pada tanaman agar tidak stres dan tetap sehat.'
-      );
-    }
-    return 'Cuaca normal, tidak perlu tindakan khusus.';
   };
 
   const sendCuacaToBackend = async (cuacaData) => {
@@ -157,32 +165,32 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
       setErrorMsg('Gagal memulai pengenalan suara. Periksa koneksi dan mikrofon Anda.');
     }
   };
-
-  const curahHujanDisplay =
-    !loading && curahHujan != null
-      ? `${parseFloat(curahHujan)} mm (${getCurahHujanDesc(parseFloat(curahHujan))})`
-      : 'Memuat...';
-
-  const cards = [
-    {
-      title: `Curah Hujan (${lokasi?.label || 'Lokasi'})`,
-      value: curahHujanDisplay,
-      icon: <Droplet size={32} className="text-primary" />,
-      color: '#E3F2FD',
-    },
-    {
-      title: 'Harga Bulan Ini',
-      value: hargaBulanIni.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' }),
-      icon: <TrendingUp size={32} className="text-success" />,
-      color: '#E8F5E9',
-    },
-    {
-      title: 'Harga Bulan Lalu',
-      value: hargaBulanLalu.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' }),
-      icon: <TrendingDown size={32} className="text-danger" />,
-      color: '#FFEBEE',
-    },
-  ];
+      const cards = [
+        {
+          title: `Curah Hujan (${lokasi?.label || 'Lokasi'})`,
+          value: !loading && curahHujan != null
+            ? `${parseFloat(curahHujan)} mm (${getCurahHujanDesc(parseFloat(curahHujan))})`
+            : 'Memuat...',
+          icon: <Droplet size={32} className="text-primary" />,
+          color: '#E3F2FD',
+        },
+        {
+          title: 'Harga Bulan Ini',
+          value: hargaBulanIni !== null
+            ? hargaBulanIni.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })
+            : 'Memuat...',
+          icon: <TrendingUp size={32} className="text-success" />,
+          color: '#E8F5E9',
+        },
+        {
+          title: 'Harga Bulan Lalu',
+          value: hargaBulanLalu !== null
+            ? hargaBulanLalu.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })
+            : 'Memuat...',
+          icon: <TrendingDown size={32} className="text-danger" />,
+          color: '#FFEBEE',
+        },
+      ];
 
   return (
     <Container className="py-4">
