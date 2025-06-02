@@ -230,150 +230,303 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
 
   return (
     <Container className="py-4" style={{ maxWidth: '1200px' }}>
-      <h1 className="mb-4 text-center" style={{ 
+  {/* Judul yang Dipercantik */}
+  <div className="text-center mb-5 position-relative">
+    <div className="px-4 py-3 d-inline-block" style={{
+      backgroundColor: '#f8fff8',
+      borderRadius: '12px',
+      boxShadow: '0 4px 12px rgba(46, 125, 50, 0.15)',
+      border: '1px solid #e8f5e9'
+    }}>
+      <h1 className="mb-1" style={{ 
         color: '#2E7D32',
-        fontWeight: 'bold',
-        fontSize: '2rem',
-        textShadow: '1px 1px 2px rgba(0,0,0,0.1)'
+        fontWeight: '700',
+        fontSize: '2.2rem',
+        letterSpacing: '0.5px',
+        position: 'relative'
       }}>
-        Dashboard Informasi Petani
+        <span style={{
+          position: 'absolute',
+          left: '-30px',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          fontSize: '1.8rem'
+        }}>🌾</span>
+        Dashboard Petani Modern
+        <span style={{
+          position: 'absolute',
+          right: '-30px',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          fontSize: '1.8rem'
+        }}>🌾</span>
       </h1>
+      <p className="text-muted mb-0" style={{ fontSize: '1rem' }}>
+        Informasi real-time untuk pertanian cerdas
+      </p>
+    </div>
+  </div>
 
-      {/* Kartu Info */}
-      <Row className="g-3 mb-4">
-        {cards.map((card, idx) => (
-          <Col key={idx} xs={12} sm={6} lg={3}>
-            <Card
-              className="h-100 border-0"
-              style={{
-                borderRadius: '12px',
-                backgroundColor: card.color,
-                boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
-                transition: 'transform 0.2s'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-5px)'}
-              onMouseLeave={(e) => e.currentTarget.style.transform = 'none'}
-            >
-              <Card.Body className="py-3">
-                <div className="d-flex align-items-center mb-2">
-                  <div className="me-3">{card.icon}</div>
-                  <Card.Title className="mb-0" style={{ fontSize: '1.1rem', fontWeight: '600' }}>
-                    {card.title}
-                  </Card.Title>
-                </div>
-                <div style={{ minHeight: '80px' }}>
-                  <div className="fw-bold" style={{ fontSize: '1.3rem' }}>
-                    {card.value}
-                  </div>
-                  <div className="text-muted small mt-1">{card.desc}</div>
-                </div>
-              </Card.Body>
-            </Card>
-          </Col>
-        ))}
-      </Row>
-
-      {/* Rekomendasi Cuaca */}
-      <Card className="mb-4 border-0 shadow-sm">
-        <Card.Body className="p-4">
-          <h2 className="mb-3" style={{ 
-            color: '#1565C0',
-            fontWeight: '600',
-            fontSize: '1.5rem'
-          }}>
-            <Droplet className="me-2" size={24} />
-            Rekomendasi Cuaca
-          </h2>
+  {/* Kartu Info - Dipercantik */}
+  <Row className="g-4 mb-5">
+    {cards.map((card, idx) => (
+      <Col key={idx} xs={12} sm={6} lg={3}>
+        <Card
+          className="h-100 border-0 position-relative overflow-hidden"
+          style={{
+            borderRadius: '14px',
+            backgroundColor: card.color,
+            boxShadow: '0 6px 15px rgba(0,0,0,0.08)',
+            transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
+            zIndex: 1
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-8px)';
+            e.currentTarget.style.boxShadow = '0 12px 20px rgba(0,0,0,0.12)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'none';
+            e.currentTarget.style.boxShadow = '0 6px 15px rgba(0,0,0,0.08)';
+          }}
+        >
+          {/* Efek gradasi */}
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            width: '100%',
+            height: '100%',
+            background: `linear-gradient(135deg, ${card.color} 0%, rgba(255,255,255,0.3) 100%)`,
+            zIndex: -1
+          }}></div>
           
-          {fetchingRecommendation ? (
-            <div className="text-center py-3">
-              <Spinner animation="border" variant="primary" size="sm" className="me-2" />
-              Memuat rekomendasi cuaca...
-            </div>
-          ) : (
-            weatherRecommendation && (
-              <div className="p-3 mt-2 rounded" style={{ 
-                backgroundColor: '#F5FBFF',
-                borderLeft: '4px solid #2196F3'
+          <Card.Body className="p-4">
+            <div className="d-flex align-items-center mb-3">
+              <div className="p-2 me-3 rounded-circle" style={{ 
+                backgroundColor: 'rgba(255,255,255,0.4)',
+                width: '50px',
+                height: '50px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
               }}>
-                <ReactMarkdown rehypePlugins={[rehypeRaw]}>{weatherRecommendation}</ReactMarkdown>
+                {card.icon}
               </div>
-            )
-          )}
-        </Card.Body>
-      </Card>
-
-      {/* Rekomendasi Suara */}
-      <Card className="mb-4 border-0 shadow-sm">
-        <Card.Body className="p-4">
-          <h2 className="mb-3" style={{ 
-            color: '#388E3C',
-            fontWeight: '600',
-            fontSize: '1.5rem'
-          }}>
-            <Mic className="me-2" size={24} />
-            Konsultasi Petani (Via Suara)
-          </h2>
-          
-          <div className="text-center mb-3">
-            <Button
-              onClick={startListening}
-              disabled={listening}
-              className="rounded-pill px-4 py-2"
-              style={{
-                backgroundColor: '#388E3C',
-                border: 'none',
-                fontWeight: '500',
-                fontSize: '1.1rem'
-              }}
-            >
-              {listening ? (
-                <>
-                  <Spinner animation="border" size="sm" className="me-2" /> Mendengarkan...
-                </>
-              ) : (
-                <>
-                  <Mic size={20} className="me-2" />
-                  Tekan untuk Bicara
-                </>
-              )}
-            </Button>
-            <p className="text-muted small mt-2">
-              Ceritakan keluhan Anda tentang tanaman, kami akan berikan solusi
-            </p>
-          </div>
-
-          {recognizedText && (
-            <Alert variant="light" className="mb-3" style={{ borderLeft: '4px solid #4CAF50' }}>
-              <strong>Anda berkata:</strong> {recognizedText}
-            </Alert>
-          )}
-
-          {fetchingRecommendation && (
-            <div className="text-center py-3">
-              <Spinner animation="border" variant="success" size="sm" className="me-2" />
-              Mencari solusi untuk masalah Anda...
+              <Card.Title className="mb-0" style={{ 
+                fontSize: '1.15rem',
+                fontWeight: '600',
+                color: '#333'
+              }}>
+                {card.title}
+              </Card.Title>
             </div>
-          )}
+            <div style={{ minHeight: '90px' }}>
+              <div className="fw-bold mb-2" style={{ 
+                fontSize: '1.4rem',
+                color: '#2E7D32',
+                lineHeight: '1.3'
+              }}>
+                {card.value}
+              </div>
+              <div className="text-muted small" style={{ lineHeight: '1.4' }}>
+                {card.desc}
+              </div>
+            </div>
+          </Card.Body>
+          
+          {/* Garis aksen */}
+          <div style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: '4px',
+            backgroundColor: idx === 0 ? '#2196F3' : 
+                          idx === 1 ? '#4CAF50' : 
+                          idx === 2 ? '#F44336' : '#FF9800',
+            transition: 'all 0.3s ease'
+          }}></div>
+        </Card>
+      </Col>
+    ))}
+  </Row>
 
-          {recommendation && !fetchingRecommendation && (
-            <div className="p-3 mt-2 rounded" style={{ 
-              backgroundColor: '#E8F5E9',
-              borderLeft: '4px solid #4CAF50'
+  {/* Rekomendasi Cuaca - Dipercantik */}
+  <Card className="mb-5 border-0" style={{
+    borderRadius: '14px',
+    boxShadow: '0 6px 15px rgba(0,0,0,0.08)',
+    overflow: 'hidden'
+  }}>
+    <Card.Body className="p-0">
+      <div className="p-4" style={{ 
+        backgroundColor: '#E3F2FD',
+        borderBottom: '1px solid rgba(0,0,0,0.05)'
+      }}>
+        <h2 className="mb-0 d-flex align-items-center" style={{ 
+          color: '#0D47A1',
+          fontWeight: '600',
+          fontSize: '1.5rem'
+        }}>
+          <Droplet className="me-3" size={28} style={{ 
+            backgroundColor: '#2196F3',
+            color: 'white',
+            padding: '6px',
+            borderRadius: '50%'
+          }} />
+          Rekomendasi Cuaca
+        </h2>
+      </div>
+      
+      <div className="p-4">
+        {fetchingRecommendation ? (
+          <div className="text-center py-4">
+            <Spinner animation="border" variant="primary" className="me-2" />
+            <span style={{ color: '#1565C0', fontWeight: '500' }}>
+              Memuat rekomendasi cuaca...
+            </span>
+          </div>
+        ) : (
+          weatherRecommendation && (
+            <div className="p-4 rounded" style={{ 
+              backgroundColor: '#F5FBFF',
+              borderLeft: '4px solid #2196F3',
+              boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.05)'
             }}>
-              <h5 className="mb-2" style={{ color: '#2E7D32' }}>Rekomendasi:</h5>
+              <ReactMarkdown rehypePlugins={[rehypeRaw]}>{weatherRecommendation}</ReactMarkdown>
+            </div>
+          )
+        )}
+      </div>
+    </Card.Body>
+  </Card>
+
+  {/* Rekomendasi Suara - Dipercantik */}
+  <Card className="mb-4 border-0" style={{
+    borderRadius: '14px',
+    boxShadow: '0 6px 15px rgba(0,0,0,0.08)',
+    overflow: 'hidden'
+  }}>
+    <Card.Body className="p-0">
+      <div className="p-4" style={{ 
+        backgroundColor: '#E8F5E9',
+        borderBottom: '1px solid rgba(0,0,0,0.05)'
+      }}>
+        <h2 className="mb-0 d-flex align-items-center" style={{ 
+          color: '#1B5E20',
+          fontWeight: '600',
+          fontSize: '1.5rem'
+        }}>
+          <Mic className="me-3" size={28} style={{ 
+            backgroundColor: '#4CAF50',
+            color: 'white',
+            padding: '6px',
+            borderRadius: '50%'
+          }} />
+          Konsultasi Petani (Via Suara)
+        </h2>
+      </div>
+      
+      <div className="p-4">
+        <div className="text-center mb-4">
+          <Button
+            onClick={startListening}
+            disabled={listening}
+            className="rounded-pill px-5 py-3"
+            style={{
+              backgroundColor: '#388E3C',
+              border: 'none',
+              fontWeight: '600',
+              fontSize: '1.1rem',
+              boxShadow: '0 4px 8px rgba(56, 142, 60, 0.3)',
+              transition: 'all 0.3s',
+              position: 'relative',
+              overflow: 'hidden'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.boxShadow = '0 6px 12px rgba(56, 142, 60, 0.4)';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.boxShadow = '0 4px 8px rgba(56, 142, 60, 0.3)';
+              e.currentTarget.style.transform = 'none';
+            }}
+          >
+            {listening ? (
+              <>
+                <Spinner animation="border" size="sm" className="me-2" />
+                <span style={{ position: 'relative', zIndex: 1 }}>Mendengarkan...</span>
+              </>
+            ) : (
+              <>
+                <Mic size={20} className="me-2" style={{ position: 'relative', zIndex: 1 }} />
+                <span style={{ position: 'relative', zIndex: 1 }}>Tekan untuk Bicara</span>
+              </>
+            )}
+            <span style={{
+              position: 'absolute',
+              top: '-50%',
+              left: '-50%',
+              width: '200%',
+              height: '200%',
+              background: 'linear-gradient(rgba(255,255,255,0.3), rgba(255,255,255,0))',
+              transform: 'rotate(30deg)',
+              transition: 'all 0.3s',
+              opacity: 0
+            }} className="hover-shine"></span>
+          </Button>
+          <p className="text-muted mt-3 mb-0" style={{ fontSize: '0.95rem' }}>
+            Ceritakan keluhan Anda tentang tanaman, kami akan berikan solusi terbaik
+          </p>
+        </div>
+
+        {recognizedText && (
+          <Alert variant="light" className="mb-4" style={{ 
+            borderLeft: '4px solid #4CAF50',
+            backgroundColor: '#f8fff8'
+          }}>
+            <strong style={{ color: '#2E7D32' }}>Anda berkata:</strong> 
+            <div className="mt-2" style={{ color: '#333' }}>{recognizedText}</div>
+          </Alert>
+        )}
+
+        {fetchingRecommendation && (
+          <div className="text-center py-4">
+            <Spinner animation="border" variant="success" className="me-2" />
+            <span style={{ color: '#388E3C', fontWeight: '500' }}>
+              Mencari solusi untuk masalah Anda...
+            </span>
+          </div>
+        )}
+
+        {recommendation && !fetchingRecommendation && (
+          <div className="p-4 rounded" style={{ 
+            backgroundColor: '#f8fff8',
+            borderLeft: '4px solid #4CAF50',
+            boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.05)'
+          }}>
+            <h5 className="mb-3" style={{ 
+              color: '#2E7D32',
+              fontWeight: '600',
+              fontSize: '1.2rem'
+            }}>Rekomendasi:</h5>
+            <div style={{ lineHeight: '1.6' }}>
               <ReactMarkdown rehypePlugins={[rehypeRaw]}>{recommendation}</ReactMarkdown>
             </div>
-          )}
+          </div>
+        )}
 
-          {errorMsg && (
-            <Alert variant="danger" className="mt-3">
-              {errorMsg}
-            </Alert>
-          )}
-        </Card.Body>
-      </Card>
-    </Container>
+        {errorMsg && (
+          <Alert variant="danger" className="mt-4" style={{ 
+            borderLeft: '4px solid #f44336',
+            backgroundColor: '#ffebee'
+          }}>
+            {errorMsg}
+          </Alert>
+        )}
+      </div>
+    </Card.Body>
+  </Card>
+</Container>
   );
 }
 
