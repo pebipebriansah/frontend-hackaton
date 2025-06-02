@@ -1,12 +1,26 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import LoginForm from './Login';
-import Layout from './pages/Layout';             // layout dengan lokasi + logout
-import CurahHujanContent from './pages/CurahHujan/CurahHujanContent'; // komponen curah hujan
+import Layout from './pages/Layout'; // halaman dashboard
 import bgImage from './assets/petani.jpg';
 
 export default function App() {
   const [showLogin, setShowLogin] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
+  // Cek session saat pertama kali load
+  useEffect(() => {
+    const session = sessionStorage.getItem('isLoggedIn');
+    if (session === 'true') {
+      setIsLoggedIn(true);
+    }
+  }, []);
+
+  // Jika sudah login, langsung tampilkan dashboard
+  if (isLoggedIn) {
+    return <Layout />;
+  }
+
+  // Jika belum login dan belum klik "Mulai Aplikasi", tampilkan halaman pembuka
   if (!showLogin) {
     return (
       <div
@@ -22,7 +36,7 @@ export default function App() {
           fontFamily: 'Poppins, sans-serif',
         }}
       >
-        {/* Overlay gelap */}
+        {/* Overlay */}
         <div
           style={{
             position: 'absolute',
@@ -77,6 +91,9 @@ export default function App() {
     );
   }
 
-  // Ketika showLogin === true, tampilkan halaman Login
-  return <LoginForm />;
+  // Jika sudah klik "Mulai Aplikasi", tampilkan form login
+  return <LoginForm onLoginSuccess={() => {
+    sessionStorage.setItem('isLoggedIn', 'true');
+    setIsLoggedIn(true);
+  }} />;
 }

@@ -33,9 +33,7 @@ function Layout({ children }) {
   const idPetani = localStorage.getItem('id_petani');
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('nama_petani');
-    localStorage.removeItem('id_petani');
+    localStorage.clear();
     navigate('/Login');
   };
 

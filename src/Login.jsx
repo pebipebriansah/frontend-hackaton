@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import bgImage from './assets/petani.jpg';
 
@@ -11,7 +11,13 @@ export default function LoginForm() {
   const [namaPetani, setNamaPetani] = useState('');
   const [showModal, setShowModal] = useState(false);
 
-  
+  // 🚀 Cek apakah user sudah login
+  useEffect(() => {
+    const isLoggedIn = localStorage.getItem('isLoggedIn');
+    if (isLoggedIn === 'true') {
+      navigate('/dashboard');
+    }
+  }, [navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -36,6 +42,7 @@ export default function LoginForm() {
         localStorage.setItem('email', data.email);
         localStorage.setItem('nama_petani', data.nama_petani);
         localStorage.setItem('id_petani', data.id_petani);
+        localStorage.setItem('isLoggedIn', 'true');
         setNamaPetani(data.nama_petani);
         setShowModal(true); // Tampilkan modal
       }
@@ -51,7 +58,7 @@ export default function LoginForm() {
     setShowModal(false);
     navigate('/dashboard');
   };
-
+  
   return (
     <div
       style={{
