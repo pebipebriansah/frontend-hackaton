@@ -119,7 +119,7 @@ function Layout({ children }) {
       className="fw-bold"
       style={{ fontSize: '1.5rem', color: '#2E7D32', marginRight: '2rem' }}
     >
-      PetaniCerdas
+    Cengek
     </Navbar.Brand>
 
     {/* Spacer agar konten lain terdorong ke kanan */}
