@@ -4,15 +4,8 @@ import Layout from './pages/Layout';             // layout dengan lokasi + logou
 import CurahHujanContent from './pages/CurahHujan/CurahHujanContent'; // komponen curah hujan
 import bgImage from './assets/petani.jpg';
 
-const lokasiOptions = [
-  { label: 'Kuningan', lat: -6.9775, lon: 108.4747 },
-  { label: 'Jakarta', lat: -6.2088, lon: 106.8456 },
-  { label: 'Bandung', lat: -6.9175, lon: 107.6191 },
-];
-
 export default function App() {
   const [showLogin, setShowLogin] = useState(false);
-  const [lokasi, setLokasi] = useState(lokasiOptions[0]);
 
   if (!showLogin) {
     return (
@@ -84,11 +77,4 @@ export default function App() {
     );
   }
 
-  // Setelah login, tampilkan layout + konten aplikasi
-  return (
-    <Layout lokasi={lokasi} onLokasiChange={setLokasi}>
-      {/* Bisa tambahkan komponen lain di sini sesuai kebutuhan */}
-      <CurahHujanContent lokasi={lokasi} />
-    </Layout>
-  );
 }
