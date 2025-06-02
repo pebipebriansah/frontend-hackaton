@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Container, Row, Col, Card, Button, Alert, Spinner, Stack } from 'react-bootstrap';
+import { Container, Row, Col, Card, Button, Alert, Spinner } from 'react-bootstrap';
 import { Droplet, Mic, TrendingUp, TrendingDown } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
@@ -24,42 +24,71 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
     }
   }, []);
 
-  // Ambil rekomendasi otomatis berdasarkan curah hujan
-  useEffect(() => {
+  // Fungsi fetch rekomendasi cuaca otomatis berdasarkan curah hujan
+  const fetchWeatherRecommendation = async () => {
     if (curahHujan == null || loading) return;
+    setFetchingRecommendation(true);
+    setErrorMsg('');
+    setRecommendation('');
 
-    const fetchWeatherRecommendation = async () => {
-      setFetchingRecommendation(true);
-      setErrorMsg('');
-      setRecommendation('');
+    try {
+      const response = await fetch(
+        'https://backendpetani-h5hwb3dzaydhcbgr.eastasia-01.azurewebsites.net/rekomendasi/',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            keluhan: `Curah hujan saat ini adalah ${curahHujan} mm (${getCurahHujanDesc(curahHujan)})`,
+          }),
+        }
+      );
 
-      try {
-        const response = await fetch(
-          'https://backendpetani-h5hwb3dzaydhcbgr.eastasia-01.azurewebsites.net/rekomendasi/',
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              keluhan: `Curah hujan saat ini adalah ${curahHujan} mm (${getCurahHujanDesc(curahHujan)})`,
-            }),
-          }
-        );
+      if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
 
-        if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+      const data = await response.json();
+      setRecommendation(data.rekomendasi || 'Tidak ada rekomendasi cuaca ditemukan.');
+    } catch (error) {
+      console.error('Fetch error:', error);
+      setErrorMsg('Gagal mengambil rekomendasi cuaca. Silakan coba lagi.');
+    } finally {
+      setFetchingRecommendation(false);
+    }
+  };
 
-        const data = await response.json();
-        setRecommendation(data.rekomendasi || 'Tidak ada rekomendasi cuaca ditemukan.');
-      } catch (error) {
-        console.error('Fetch error:', error);
-        setErrorMsg('Gagal mengambil rekomendasi cuaca. Silakan coba lagi.');
-      } finally {
-        setFetchingRecommendation(false);
-      }
-    };
-
+  // useEffect untuk rekomendasi cuaca otomatis ketika curah hujan berubah
+  useEffect(() => {
     fetchWeatherRecommendation();
   }, [curahHujan, loading]);
 
+  // Fungsi fetch rekomendasi dari hasil speech-to-text
+  const fetchSpeechRecommendation = async (text) => {
+    setFetchingRecommendation(true);
+    setErrorMsg('');
+    setRecommendation('');
+
+    try {
+      const response = await fetch(
+        'https://backendpetani-h5hwb3dzaydhcbgr.eastasia-01.azurewebsites.net/rekomendasi/',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ keluhan: text }),
+        }
+      );
+
+      if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+
+      const data = await response.json();
+      setRecommendation(data.rekomendasi || 'Tidak ada rekomendasi ditemukan.');
+    } catch (error) {
+      console.error('Fetch error:', error);
+      setErrorMsg('Gagal mengambil rekomendasi. Silakan coba lagi.');
+    } finally {
+      setFetchingRecommendation(false);
+    }
+  };
+
+  // Fungsi mulai mendengarkan suara
   const startListening = async () => {
     setListening(true);
     setRecognizedText('');
@@ -84,30 +113,7 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
         setListening(false);
         if (result.reason === SpeechSDK.ResultReason.RecognizedSpeech) {
           setRecognizedText(result.text);
-          setFetchingRecommendation(true);
-          setRecommendation('');
-          setErrorMsg('');
-
-          try {
-            const response = await fetch(
-              'https://backendpetani-h5hwb3dzaydhcbgr.eastasia-01.azurewebsites.net/rekomendasi/',
-              {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ keluhan: result.text }),
-              }
-            );
-
-            if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
-
-            const data = await response.json();
-            setRecommendation(data.rekomendasi || 'Tidak ada rekomendasi ditemukan.');
-          } catch (error) {
-            console.error('Fetch error:', error);
-            setErrorMsg('Gagal mengambil rekomendasi. Silakan coba lagi.');
-          } finally {
-            setFetchingRecommendation(false);
-          }
+          await fetchSpeechRecommendation(result.text);
         } else {
           setRecognizedText('Gagal mengenali suara.');
         }
