@@ -27,6 +27,7 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
       script.onerror = () => setErrorMsg('Gagal memuat Speech SDK.');
       document.body.appendChild(script);
     }
+    
     const fetchHargaCabai = async () => {
       try {
         const response = await fetch(
@@ -65,10 +66,10 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
   }, []);
 
   const getCurahHujanDesc = (value) => {
-    if (value === 0) return 'tidak ada hujan';
-    if (value < 2.5) return 'hujan ringan';
-    if (value < 7.6) return 'hujan sedang';
-    return 'hujan lebat';
+    if (value === 0) return 'Tidak ada hujan';
+    if (value < 2.5) return 'Hujan ringan';
+    if (value < 7.6) return 'Hujan sedang';
+    return 'Hujan lebat';
   };
 
   const sendCuacaToBackend = async (cuacaData) => {
@@ -91,10 +92,10 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
       const curah = parseFloat(cuacaData.curah_hujan);
       if (curah > 7) {
         setWeatherRecommendation(
-          'Hujan terus-menerus lebih dari 7 hari. Disarankan memberikan vitamin pada tanaman agar tidak stres dan tetap sehat.'
+          '**Hujan terus-menerus lebih dari 7 hari.**\n\nDisarankan:\n- Berikan vitamin pada tanaman agar tidak stres\n- Periksa saluran drainase\n- Waspada terhadap serangan penyakit'
         );
       } else {
-        setWeatherRecommendation('Curah hujan belum melebihi 7 hari berturut-turut, kondisi cuaca masih aman.');
+        setWeatherRecommendation('**Kondisi cuaca normal**\n\nCurah hujan belum melebihi 7 hari berturut-turut, kondisi tanaman masih aman.');
       }
     } finally {
       setFetchingRecommendation(false);
@@ -169,7 +170,7 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
           setRecognizedText(result.text);
           await fetchSpeechRecommendation(result.text);
         } else {
-          setRecognizedText('Gagal mengenali suara.');
+          setRecognizedText('Gagal mengenali suara. Silakan coba lagi.');
         }
 
         recognizer.close();
@@ -185,154 +186,192 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
     {
       title: `Curah Hujan (${lokasi?.label || 'Lokasi'})`,
       value: !loading && curahHujan != null
-        ? `${parseFloat(curahHujan)} mm (${getCurahHujanDesc(parseFloat(curahHujan))})`
+        ? `${parseFloat(curahHujan)} mm\n(${getCurahHujanDesc(parseFloat(curahHujan))})`
         : 'Memuat...',
       icon: <Droplet size={36} className="text-primary" />,
       color: '#E3F2FD',
+      desc: 'Informasi curah hujan terkini di lokasi Anda'
     },
     {
       title: 'Harga Bulan Ini',
       value: hargaBulanIni !== null
-        ? hargaBulanIni.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })
+        ? hargaBulanIni.toLocaleString('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 })
         : 'Memuat...',
       icon: <TrendingUp size={36} className="text-success" />,
       color: '#E8F5E9',
+      desc: 'Harga rata-rata cabai bulan ini'
     },
     {
       title: 'Harga Bulan Lalu',
       value: hargaBulanLalu !== null
-        ? hargaBulanLalu.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })
+        ? hargaBulanLalu.toLocaleString('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 })
         : 'Memuat...',
       icon: <TrendingDown size={36} className="text-danger" />,
       color: '#FFEBEE',
+      desc: 'Harga rata-rata cabai bulan lalu'
     },
     {
-      title: 'Prediksi Harga Bulan Depan',
+      title: 'Prediksi Harga',
       value: hargaPrediksi !== null
         ? (
           <>
-            {hargaPrediksi.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })} <br />
-            <span className="text-muted" style={{ fontSize: '0.9rem' }}>
-              MSE: {meanSquaredError?.toLocaleString('id-ID', { maximumFractionDigits: 2 })}
-            </span>
-            <br />
-            <small className="text-muted">Perkiraan harga bulan depan berdasarkan data terkini.</small>
+            {hargaPrediksi.toLocaleString('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 })} 
+            <div className="mt-2 text-muted small">
+              Akurasi prediksi: {meanSquaredError?.toLocaleString('id-ID', { maximumFractionDigits: 2 })}
+            </div>
           </>
         )
         : 'Memuat...',
       icon: <TrendingUp size={36} className="text-warning" />,
       color: '#FFF3E0',
+      desc: 'Perkiraan harga bulan depan berdasarkan data terkini'
     },
   ];
 
   return (
-    <Container className="py-4">
-      <h1 className="mb-5 fw-bold text-success text-center" style={{ letterSpacing: 1.5 }}>
-        Dashboard Petani
+    <Container className="py-4" style={{ maxWidth: '1200px' }}>
+      <h1 className="mb-4 text-center" style={{ 
+        color: '#2E7D32',
+        fontWeight: 'bold',
+        fontSize: '2rem',
+        textShadow: '1px 1px 2px rgba(0,0,0,0.1)'
+      }}>
+        Dashboard Informasi Petani
       </h1>
 
       {/* Kartu Info */}
-      <Card className="mb-5 p-4 shadow-sm border-0" style={{ borderRadius: '18px' }}>
-        <Row className="g-4">
-          {cards.map((card, idx) => (
-            <Col key={idx} xs={12} md={6} lg={3}>
-              <Card
-                className="h-100 shadow-sm"
-                style={{
-                  borderRadius: '18px',
-                  backgroundColor: card.color,
-                  cursor: 'default',
-                  transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-6px)';
-                  e.currentTarget.style.boxShadow = '0 10px 20px rgba(0,0,0,0.12)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 4px 10px rgba(0,0,0,0.08)';
-                }}
-              >
-                <Card.Body className="d-flex align-items-center gap-3">
-                  <div>{card.icon}</div>
-                  <div>
-                    <Card.Title className="fs-5 fw-semibold">{card.title}</Card.Title>
-                    <Card.Text className="fs-4 fw-bold mb-0">{card.value}</Card.Text>
+      <Row className="g-3 mb-4">
+        {cards.map((card, idx) => (
+          <Col key={idx} xs={12} sm={6} lg={3}>
+            <Card
+              className="h-100 border-0"
+              style={{
+                borderRadius: '12px',
+                backgroundColor: card.color,
+                boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                transition: 'transform 0.2s'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-5px)'}
+              onMouseLeave={(e) => e.currentTarget.style.transform = 'none'}
+            >
+              <Card.Body className="py-3">
+                <div className="d-flex align-items-center mb-2">
+                  <div className="me-3">{card.icon}</div>
+                  <Card.Title className="mb-0" style={{ fontSize: '1.1rem', fontWeight: '600' }}>
+                    {card.title}
+                  </Card.Title>
+                </div>
+                <div style={{ minHeight: '80px' }}>
+                  <div className="fw-bold" style={{ fontSize: '1.3rem' }}>
+                    {card.value}
                   </div>
-                </Card.Body>
-              </Card>
-            </Col>
-          ))}
-        </Row>
+                  <div className="text-muted small mt-1">{card.desc}</div>
+                </div>
+              </Card.Body>
+            </Card>
+          </Col>
+        ))}
+      </Row>
+
+      {/* Rekomendasi Cuaca */}
+      <Card className="mb-4 border-0 shadow-sm">
+        <Card.Body className="p-4">
+          <h2 className="mb-3" style={{ 
+            color: '#1565C0',
+            fontWeight: '600',
+            fontSize: '1.5rem'
+          }}>
+            <Droplet className="me-2" size={24} />
+            Rekomendasi Cuaca
+          </h2>
+          
+          {fetchingRecommendation ? (
+            <div className="text-center py-3">
+              <Spinner animation="border" variant="primary" size="sm" className="me-2" />
+              Memuat rekomendasi cuaca...
+            </div>
+          ) : (
+            weatherRecommendation && (
+              <div className="p-3 mt-2 rounded" style={{ 
+                backgroundColor: '#F5FBFF',
+                borderLeft: '4px solid #2196F3'
+              }}>
+                <ReactMarkdown rehypePlugins={[rehypeRaw]}>{weatherRecommendation}</ReactMarkdown>
+              </div>
+            )
+          )}
+        </Card.Body>
       </Card>
 
-      {/* Card Rekomendasi Cuaca */}
-      <Card className="mb-5 p-4 shadow-sm border-0" style={{ borderRadius: '18px' }}>
-        <h2 className="mb-4 fw-bold text-center text-primary" style={{ letterSpacing: 1 }}>
-          Rekomendasi Cuaca
-        </h2>
-        {fetchingRecommendation && (
-          <div className="text-center my-3">
-            <Spinner animation="border" size="sm" /> Mengambil rekomendasi cuaca...
+      {/* Rekomendasi Suara */}
+      <Card className="mb-4 border-0 shadow-sm">
+        <Card.Body className="p-4">
+          <h2 className="mb-3" style={{ 
+            color: '#388E3C',
+            fontWeight: '600',
+            fontSize: '1.5rem'
+          }}>
+            <Mic className="me-2" size={24} />
+            Konsultasi Petani (Via Suara)
+          </h2>
+          
+          <div className="text-center mb-3">
+            <Button
+              onClick={startListening}
+              disabled={listening}
+              className="rounded-pill px-4 py-2"
+              style={{
+                backgroundColor: '#388E3C',
+                border: 'none',
+                fontWeight: '500',
+                fontSize: '1.1rem'
+              }}
+            >
+              {listening ? (
+                <>
+                  <Spinner animation="border" size="sm" className="me-2" /> Mendengarkan...
+                </>
+              ) : (
+                <>
+                  <Mic size={20} className="me-2" />
+                  Tekan untuk Bicara
+                </>
+              )}
+            </Button>
+            <p className="text-muted small mt-2">
+              Ceritakan keluhan Anda tentang tanaman, kami akan berikan solusi
+            </p>
           </div>
-        )}
-        {weatherRecommendation && !fetchingRecommendation && (
-          <Card className="p-3 mt-3 shadow-sm border-0" style={{ borderRadius: '18px', backgroundColor: '#F0F7FF' }}>
-            <ReactMarkdown rehypePlugins={[rehypeRaw]}>{weatherRecommendation}</ReactMarkdown>
-          </Card>
-        )}
-      </Card>
 
-      {/* Card Rekomendasi OpenAI */}
-      <Card className="mb-5 p-4 shadow-sm border-0" style={{ borderRadius: '18px' }}>
-        <h2 className="mb-4 fw-bold text-center text-success" style={{ letterSpacing: 1 }}>
-          Rekomendasi Tanaman (via Suara)
-        </h2>
+          {recognizedText && (
+            <Alert variant="light" className="mb-3" style={{ borderLeft: '4px solid #4CAF50' }}>
+              <strong>Anda berkata:</strong> {recognizedText}
+            </Alert>
+          )}
 
-        <div className="text-center mb-4">
-          <Button
-            onClick={startListening}
-            disabled={listening}
-            className="btn-lg btn-success rounded-pill px-5"
-            aria-label="Mulai rekam suara untuk rekomendasi"
-            style={{ fontWeight: '600' }}
-          >
-            {listening ? (
-              <>
-                <Spinner animation="border" size="sm" className="me-2" /> Mendengarkan...
-              </>
-            ) : (
-              <>
-                <Mic size={20} className="me-2" />
-                Rekam Suara
-              </>
-            )}
-          </Button>
-        </div>
+          {fetchingRecommendation && (
+            <div className="text-center py-3">
+              <Spinner animation="border" variant="success" size="sm" className="me-2" />
+              Mencari solusi untuk masalah Anda...
+            </div>
+          )}
 
-        {recognizedText && (
-          <Alert variant="info" className="fs-5" style={{ whiteSpace: 'pre-wrap' }}>
-            <strong>Anda berkata:</strong> {recognizedText}
-          </Alert>
-        )}
+          {recommendation && !fetchingRecommendation && (
+            <div className="p-3 mt-2 rounded" style={{ 
+              backgroundColor: '#E8F5E9',
+              borderLeft: '4px solid #4CAF50'
+            }}>
+              <h5 className="mb-2" style={{ color: '#2E7D32' }}>Rekomendasi:</h5>
+              <ReactMarkdown rehypePlugins={[rehypeRaw]}>{recommendation}</ReactMarkdown>
+            </div>
+          )}
 
-        {fetchingRecommendation && (
-          <div className="text-center my-3">
-            <Spinner animation="border" size="sm" /> Mengambil rekomendasi...
-          </div>
-        )}
-
-        {recommendation && !fetchingRecommendation && (
-          <Card className="p-3 mt-3 shadow-sm border-0" style={{ borderRadius: '18px', backgroundColor: '#E6F4EA' }}>
-            <ReactMarkdown rehypePlugins={[rehypeRaw]}>{recommendation}</ReactMarkdown>
-          </Card>
-        )}
-
-        {errorMsg && (
-          <Alert variant="danger" className="mt-3">
-            {errorMsg}
-          </Alert>
-        )}
+          {errorMsg && (
+            <Alert variant="danger" className="mt-3">
+              {errorMsg}
+            </Alert>
+          )}
+        </Card.Body>
       </Card>
     </Container>
   );

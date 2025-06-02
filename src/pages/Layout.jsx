@@ -333,7 +333,7 @@ function Layout({ children }) {
           fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
         }}
       >
-        &copy; 2025 PetaniCerdas — Semua hak dilindungi.
+        &copy; 2025 Cengek — Semua hak dilindungi.
       </footer>
 
       {/* Error alert */}
