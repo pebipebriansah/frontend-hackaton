@@ -54,7 +54,7 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
             setRecommendation(data.rekomendasi || 'Tidak ada rekomendasi ditemukan.');
           } catch (fetchError) {
             setRecommendation('');
-            setErrorMsg('Gagal mengambil rekomendasi. Silakan coba lagi.');
+            setErrorMsg('Gagal mengambil rekomendasi. Silakan coba lagi.',fetchError);
           } finally {
             setFetchingRecommendation(false);
           }
@@ -65,7 +65,7 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
       });
     } catch (e) {
       setListening(false);
-      setErrorMsg('Error saat memulai pengenalan suara. Pastikan mikrofon berfungsi.');
+      setErrorMsg('Error saat memulai pengenalan suara. Pastikan mikrofon berfungsi.',e);
     }
   };
 
@@ -178,6 +178,7 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
               lineHeight: '1.4',
               borderRadius: '12px',
               boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+              userSelect: 'text',
             }}
           >
             <strong>Hasil Pengenalan Suara:</strong> <br />
@@ -189,9 +190,7 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
         {fetchingRecommendation && (
           <div className="text-center mb-3">
             <Spinner animation="border" variant="primary" />
-            <div className="mt-2" style={{ fontWeight: '600', color: '#0d6efd' }}>
-              Mengambil rekomendasi...
-            </div>
+            <div className="mt-2 fw-semibold text-primary">Mengambil rekomendasi...</div>
           </div>
         )}
 
@@ -204,26 +203,26 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
 
         {/* Rekomendasi */}
         {recommendation && !fetchingRecommendation && (
-          <Alert
-            variant="success"
-            className="mb-0"
+          <Card
+            className="mb-3 p-3"
             style={{
-              whiteSpace: 'pre-wrap',
-              maxHeight: '180px',
+              maxHeight: '320px',
               overflowY: 'auto',
+              whiteSpace: 'pre-wrap',
               wordBreak: 'break-word',
               fontSize: '1rem',
-              lineHeight: '1.4',
-              padding: '12px 16px',
+              lineHeight: '1.5',
               borderRadius: '12px',
-              boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-              backgroundColor: '#d4edda',
-              color: '#155724',
+              boxShadow: '0 2px 12px rgba(0,0,0,0.12)',
+              backgroundColor: '#e6f4ea',
+              color: '#2e4a1f',
+              border: '1px solid #a3c293',
+              userSelect: 'text',
             }}
           >
-            <strong>Rekomendasi:</strong> <br />
-            {recommendation}
-          </Alert>
+            <strong>Rekomendasi:</strong>
+            <div style={{ marginTop: '0.5rem' }}>{recommendation}</div>
+          </Card>
         )}
       </Card>
     </>
