@@ -221,6 +221,7 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
                   <span className="text-muted" style={{ fontSize: '0.9rem' }}>
                     MSE: {meanSquaredError?.toLocaleString('id-ID', { maximumFractionDigits: 2 })}
                   </span>
+                  <br/>
                   <small className="text-muted">Perkiraan harga bulan depan berdasarkan data terkini.</small>
                 </>
               )
