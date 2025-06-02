@@ -83,7 +83,7 @@ function Layout({ children }) {
 
       const tanggal = new Date().toISOString().split('T')[0];
 
-      const response = await fetch('http://localhost:8000/cengek/cuaca', {
+      const response = await fetch('https://backendpetani-h5hwb3dzaydhcbgr.eastasia-01.azurewebsites.net/cuaca/cuaca/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
