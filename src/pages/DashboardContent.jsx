@@ -12,8 +12,6 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
   const [hargaPrediksi, setHargaPrediksi] = useState(null);
   const [meanSquaredError, setMeanSquaredError] = useState(null);
 
-
-
   const [listening, setListening] = useState(false);
   const [recognizedText, setRecognizedText] = useState('');
   const [recommendation, setRecommendation] = useState('');
@@ -49,22 +47,21 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
     fetchHargaCabai();
 
     const fetchPrediksiHarga = async () => {
-    try {
-      const response = await fetch(
-        'https://backendpetani-h5hwb3dzaydhcbgr.eastasia-01.azurewebsites.net/harga/harga/prediksi'
-      );
-      if (!response.ok) throw new Error('Gagal mengambil data prediksi harga.');
+      try {
+        const response = await fetch(
+          'https://backendpetani-h5hwb3dzaydhcbgr.eastasia-01.azurewebsites.net/harga/harga/prediksi'
+        );
+        if (!response.ok) throw new Error('Gagal mengambil data prediksi harga.');
 
-      const data = await response.json();
-      setHargaPrediksi(data.harga_bulan_depan); // Perubahan di sini
-      setMeanSquaredError(data.mean_squared_error);
-    } catch (error) {
-      console.error('Error saat fetch prediksi harga:', error);
-    }   
-  };
+        const data = await response.json();
+        setHargaPrediksi(data.harga_bulan_depan);
+        setMeanSquaredError(data.mean_squared_error);
+      } catch (error) {
+        console.error('Error saat fetch prediksi harga:', error);
+      }
+    };
 
-  fetchPrediksiHarga();
-
+    fetchPrediksiHarga();
   }, []);
 
   const getCurahHujanDesc = (value) => {
@@ -75,38 +72,34 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
   };
 
   const sendCuacaToBackend = async (cuacaData) => {
-  setFetchingRecommendation(true);
-  setErrorMsg('');
-  setWeatherRecommendation('');
-  try {
-    const response = await fetch('https://backendpetani-h5hwb3dzaydhcbgr.eastasia-01.azurewebsites.net/cuaca/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(cuacaData),
-    });
+    setFetchingRecommendation(true);
+    setErrorMsg('');
+    setWeatherRecommendation('');
+    try {
+      const response = await fetch('https://backendpetani-h5hwb3dzaydhcbgr.eastasia-01.azurewebsites.net/cuaca/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(cuacaData),
+      });
 
-    if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+      if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
 
-    const data = await response.json();
-    setWeatherRecommendation(data.rekomendasi || 'Tidak ada rekomendasi cuaca ditemukan.');
-  } catch (error) {
-    console.warn('Gagal mengambil data dari backend, gunakan fallback lokal.',error);
-    // Tidak menampilkan pesan error, langsung beri fallback
-    const curah = parseFloat(cuacaData.curah_hujan);
-    if (curah > 7) {
-      setWeatherRecommendation(
-        'Hujan terus-menerus lebih dari 7 hari. Disarankan memberikan vitamin pada tanaman agar tidak stres dan tetap sehat.'
-      );
-    } else {
-      setWeatherRecommendation(
-        'Curah hujan belum melebihi 7 hari berturut-turut, kondisi cuaca masih aman.'
-      );
+      const data = await response.json();
+      setWeatherRecommendation(data.rekomendasi || 'Tidak ada rekomendasi cuaca ditemukan.');
+    } catch (error) {
+      console.warn('Gagal mengambil data dari backend, gunakan fallback lokal.', error);
+      const curah = parseFloat(cuacaData.curah_hujan);
+      if (curah > 7) {
+        setWeatherRecommendation(
+          'Hujan terus-menerus lebih dari 7 hari. Disarankan memberikan vitamin pada tanaman agar tidak stres dan tetap sehat.'
+        );
+      } else {
+        setWeatherRecommendation('Curah hujan belum melebihi 7 hari berturut-turut, kondisi cuaca masih aman.');
+      }
+    } finally {
+      setFetchingRecommendation(false);
     }
-  } finally {
-    setFetchingRecommendation(false);
-  }
-};
-
+  };
 
   useEffect(() => {
     if (loading || curahHujan == null || !lokasi) return;
@@ -187,72 +180,84 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
       setErrorMsg('Gagal memulai pengenalan suara. Periksa koneksi dan mikrofon Anda.');
     }
   };
-      const cards = [
-        {
-          title: `Curah Hujan (${lokasi?.label || 'Lokasi'})`,
-          value: !loading && curahHujan != null
-            ? `${parseFloat(curahHujan)} mm (${getCurahHujanDesc(parseFloat(curahHujan))})`
-            : 'Memuat...',
-          icon: <Droplet size={32} className="text-primary" />,
-          color: '#E3F2FD',
-        },
-        {
-          title: 'Harga Bulan Ini',
-          value: hargaBulanIni !== null
-            ? hargaBulanIni.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })
-            : 'Memuat...',
-          icon: <TrendingUp size={32} className="text-success" />,
-          color: '#E8F5E9',
-        },
-        {
-          title: 'Harga Bulan Lalu',
-          value: hargaBulanLalu !== null
-            ? hargaBulanLalu.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })
-            : 'Memuat...',
-          icon: <TrendingDown size={32} className="text-danger" />,
-          color: '#FFEBEE',
-        },
-        {
-          title: 'Prediksi Harga Bulan Depan',
-          value: hargaPrediksi !== null
-            ? (
-                <>
-                  {hargaPrediksi.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })} <br />
-                  <span className="text-muted" style={{ fontSize: '0.9rem' }}>
-                    MSE: {meanSquaredError?.toLocaleString('id-ID', { maximumFractionDigits: 2 })}
-                  </span>
-                  <br/>
-                  <small className="text-muted">Perkiraan harga bulan depan berdasarkan data terkini.</small>
-                </>
-              )
-            : 'Memuat...',
-          icon: <TrendingUp size={32} className="text-warning" />,
-          color: '#FFF3E0',
-        },
-      ];
+
+  const cards = [
+    {
+      title: `Curah Hujan (${lokasi?.label || 'Lokasi'})`,
+      value: !loading && curahHujan != null
+        ? `${parseFloat(curahHujan)} mm (${getCurahHujanDesc(parseFloat(curahHujan))})`
+        : 'Memuat...',
+      icon: <Droplet size={36} className="text-primary" />,
+      color: '#E3F2FD',
+    },
+    {
+      title: 'Harga Bulan Ini',
+      value: hargaBulanIni !== null
+        ? hargaBulanIni.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })
+        : 'Memuat...',
+      icon: <TrendingUp size={36} className="text-success" />,
+      color: '#E8F5E9',
+    },
+    {
+      title: 'Harga Bulan Lalu',
+      value: hargaBulanLalu !== null
+        ? hargaBulanLalu.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })
+        : 'Memuat...',
+      icon: <TrendingDown size={36} className="text-danger" />,
+      color: '#FFEBEE',
+    },
+    {
+      title: 'Prediksi Harga Bulan Depan',
+      value: hargaPrediksi !== null
+        ? (
+          <>
+            {hargaPrediksi.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })} <br />
+            <span className="text-muted" style={{ fontSize: '0.9rem' }}>
+              MSE: {meanSquaredError?.toLocaleString('id-ID', { maximumFractionDigits: 2 })}
+            </span>
+            <br />
+            <small className="text-muted">Perkiraan harga bulan depan berdasarkan data terkini.</small>
+          </>
+        )
+        : 'Memuat...',
+      icon: <TrendingUp size={36} className="text-warning" />,
+      color: '#FFF3E0',
+    },
+  ];
 
   return (
     <Container className="py-4">
-      <h1 className="mb-5 fw-bold text-success text-center">Dashboard Petani</h1>
+      <h1 className="mb-5 fw-bold text-success text-center" style={{ letterSpacing: 1.5 }}>
+        Dashboard Petani
+      </h1>
 
       {/* Kartu Info */}
-      <Card className="mb-5 p-4 shadow-sm" style={{ borderRadius: '18px' }}>
+      <Card className="mb-5 p-4 shadow-sm border-0" style={{ borderRadius: '18px' }}>
         <Row className="g-4">
           {cards.map((card, idx) => (
-            <Col key={idx} md={4}>
+            <Col key={idx} xs={12} md={6} lg={3}>
               <Card
                 className="h-100 shadow-sm"
                 style={{
                   borderRadius: '18px',
                   backgroundColor: card.color,
                   cursor: 'default',
+                  transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-6px)';
+                  e.currentTarget.style.boxShadow = '0 10px 20px rgba(0,0,0,0.12)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 4px 10px rgba(0,0,0,0.08)';
                 }}
               >
                 <Card.Body className="d-flex align-items-center gap-3">
                   <div>{card.icon}</div>
                   <div>
                     <Card.Title className="fs-5 fw-semibold">{card.title}</Card.Title>
-                    <Card.Text className="fs-4 fw-bold">{card.value}</Card.Text>
+                    <Card.Text className="fs-4 fw-bold mb-0">{card.value}</Card.Text>
                   </div>
                 </Card.Body>
               </Card>
@@ -262,46 +267,52 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
       </Card>
 
       {/* Card Rekomendasi Cuaca */}
-      <Card className="mb-5 p-4 shadow-sm" style={{ borderRadius: '18px' }}>
-        <h2 className="mb-4 fw-bold text-center">Rekomendasi Cuaca</h2>
+      <Card className="mb-5 p-4 shadow-sm border-0" style={{ borderRadius: '18px' }}>
+        <h2 className="mb-4 fw-bold text-center text-primary" style={{ letterSpacing: 1 }}>
+          Rekomendasi Cuaca
+        </h2>
         {fetchingRecommendation && (
           <div className="text-center my-3">
             <Spinner animation="border" size="sm" /> Mengambil rekomendasi cuaca...
           </div>
         )}
         {weatherRecommendation && !fetchingRecommendation && (
-          <Card className="p-3 mt-3 shadow-sm" style={{ borderRadius: '18px' }}>
+          <Card className="p-3 mt-3 shadow-sm border-0" style={{ borderRadius: '18px', backgroundColor: '#F0F7FF' }}>
             <ReactMarkdown rehypePlugins={[rehypeRaw]}>{weatherRecommendation}</ReactMarkdown>
           </Card>
         )}
       </Card>
 
       {/* Card Rekomendasi OpenAI */}
-      <Card className="mb-5 p-4 shadow-sm" style={{ borderRadius: '18px' }}>
-        <h2 className="mb-4 fw-bold text-center">Rekomendasi Tanaman (via Suara)</h2>
+      <Card className="mb-5 p-4 shadow-sm border-0" style={{ borderRadius: '18px' }}>
+        <h2 className="mb-4 fw-bold text-center text-success" style={{ letterSpacing: 1 }}>
+          Rekomendasi Tanaman (via Suara)
+        </h2>
 
-        <div className="text-center mb-3">
+        <div className="text-center mb-4">
           <Button
             onClick={startListening}
             disabled={listening}
-            className="btn-lg btn-success rounded-pill px-4"
+            className="btn-lg btn-success rounded-pill px-5"
             aria-label="Mulai rekam suara untuk rekomendasi"
+            style={{ fontWeight: '600' }}
           >
             {listening ? (
               <>
-                <Spinner animation="border" size="sm" /> Mendengarkan...
+                <Spinner animation="border" size="sm" className="me-2" /> Mendengarkan...
               </>
             ) : (
               <>
-                <Mic size={18} className="mb-1" /> Mulai Bicara
+                <Mic size={20} className="me-2" />
+                Rekam Suara
               </>
             )}
           </Button>
         </div>
 
         {recognizedText && (
-          <Alert variant="info" className="text-center fs-6">
-            <strong>Keluhan Anda:</strong> {recognizedText}
+          <Alert variant="info" className="fs-5" style={{ whiteSpace: 'pre-wrap' }}>
+            <strong>Anda berkata:</strong> {recognizedText}
           </Alert>
         )}
 
@@ -312,7 +323,7 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
         )}
 
         {recommendation && !fetchingRecommendation && (
-          <Card className="p-3 mt-3 shadow-sm" style={{ borderRadius: '18px' }}>
+          <Card className="p-3 mt-3 shadow-sm border-0" style={{ borderRadius: '18px', backgroundColor: '#E6F4EA' }}>
             <ReactMarkdown rehypePlugins={[rehypeRaw]}>{recommendation}</ReactMarkdown>
           </Card>
         )}
