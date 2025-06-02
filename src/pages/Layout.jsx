@@ -29,8 +29,7 @@ function Layout({ children }) {
 
   const toggleSidebar = () => setShowSidebar((prev) => !prev);
 
-  // Ambil data user dan id_petani dari localStorage (session)
-  const namaUser = localStorage.getItem('nama_petani') || 'User';
+  const namaUser = localStorage.getItem('nama_petani') || 'Petani';
   const idPetani = localStorage.getItem('id_petani');
 
   const handleLogout = () => {
@@ -40,7 +39,6 @@ function Layout({ children }) {
     navigate('/Login');
   };
 
-  // Fungsi untuk mengambil data curah hujan dari OpenWeatherMap
   const getCurahHujan = async (lat, lon) => {
     if (!lat || !lon) return;
     try {
@@ -53,17 +51,13 @@ function Layout({ children }) {
       const data = await res.json();
 
       const hariIni = new Date().toISOString().split('T')[0];
-      // Cari data cuaca hari ini
       const dataHariIni = data.list.find((d) => d.dt_txt.startsWith(hariIni));
       const rain = dataHariIni?.rain?.['3h'] || 0;
 
       setCurahHujan(rain);
 
-      // Setelah data curah hujan didapat, simpan ke backend
       if (idPetani) {
         await simpanDataCuaca(rain, lat, lon, lokasi.label);
-      } else {
-        console.warn('id_petani tidak ditemukan di localStorage');
       }
     } catch (err) {
       setError(err.message || 'Gagal mengambil data cuaca');
@@ -72,43 +66,43 @@ function Layout({ children }) {
     }
   };
 
-  // Fungsi menyimpan data cuaca ke backend
   const simpanDataCuaca = async (rainValue, lat, lon, lokasiLabel) => {
-  try {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      setError('Token tidak ditemukan, silakan login ulang');
-      return;
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Token tidak ditemukan, silakan login ulang');
+        return;
+      }
+
+      const response = await fetch(
+        'https://backendpetani-h5hwb3dzaydhcbgr.eastasia-01.azurewebsites.net/cuaca/cuaca/',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            id_petani: parseInt(idPetani, 10),
+            lokasi: lokasiLabel,
+            latitude: lat,
+            longitude: lon,
+            curah_hujan: rainValue,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.message || 'Gagal menyimpan data cuaca');
+      }
+
+      console.log('Data cuaca berhasil disimpan ke backend');
+    } catch (err) {
+      setError(err.message);
     }
+  };
 
-    const response = await fetch('https://backendpetani-h5hwb3dzaydhcbgr.eastasia-01.azurewebsites.net/cuaca/cuaca/', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        id_petani: parseInt(idPetani, 10),
-        lokasi: lokasiLabel,
-        latitude: lat,
-        longitude: lon,
-        curah_hujan: rainValue,
-      }),
-    });
-
-    if (!response.ok) {
-      const errData = await response.json();
-      throw new Error(errData.message || 'Gagal menyimpan data cuaca');
-    }
-
-    console.log('Data cuaca berhasil disimpan ke backend');
-  } catch (err) {
-    setError(err.message);
-  }
-};
-
-
-  // Fungsi mengambil lokasi dengan GPS
   const gunakanGPS = () => {
     if (!navigator.geolocation) {
       setError('Geolocation tidak didukung oleh browser Anda');
@@ -151,19 +145,17 @@ function Layout({ children }) {
     );
   };
 
-  // Jika lokasi atau gpsAktif berubah, ambil data curah hujan
   useEffect(() => {
     if (gpsAktif && lokasi.lat && lokasi.lon) {
       getCurahHujan(lokasi.lat, lokasi.lon);
     }
   }, [gpsAktif, lokasi]);
 
-  // Fungsi untuk menerjemahkan nilai curah hujan ke deskripsi
   const getCurahHujanDesc = (value) => {
-    if (value === 0) return 'tidak ada hujan';
-    if (value < 2.5) return 'hujan ringan';
-    if (value < 7.6) return 'hujan sedang';
-    return 'hujan lebat';
+    if (value === 0) return 'Tidak ada hujan';
+    if (value < 2.5) return 'Hujan ringan';
+    if (value < 7.6) return 'Hujan sedang';
+    return 'Hujan lebat';
   };
 
   return (
@@ -171,63 +163,94 @@ function Layout({ children }) {
       {/* Navbar */}
       <Navbar
         expand={false}
-        bg="light"
+        bg="success"
+        variant="dark"
         fixed="top"
         style={{
-          boxShadow: '0 2px 8px rgb(0 0 0 / 0.1)',
-          backdropFilter: 'blur(10px)',
-          backgroundColor: 'rgba(255, 255, 255, 0.8)',
+          boxShadow: '0 2px 10px rgb(0 0 0 / 0.15)',
+          backdropFilter: 'blur(12px)',
           zIndex: 1040,
+          padding: '0.6rem 1rem',
+          fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
         }}
       >
         <Container fluid className="d-flex align-items-center">
           {/* Tombol Menu Sidebar */}
-          <Button variant="outline-success" onClick={toggleSidebar} className="me-3">
-            &#9776;
+          <Button
+            variant="outline-light"
+            onClick={toggleSidebar}
+            className="me-3"
+            style={{ fontSize: '1.8rem', width: 48, height: 48, borderRadius: 8 }}
+            aria-label="Buka Menu"
+          >
+            ☰
           </Button>
 
           {/* Nama App */}
           <Navbar.Brand
             className="fw-bold"
-            style={{ fontSize: '1.5rem', color: '#2E7D32', marginRight: '2rem' }}
+            style={{ fontSize: '1.7rem', letterSpacing: 1, userSelect: 'none' }}
           >
             Cengek
           </Navbar.Brand>
 
-          {/* Spacer agar konten lain terdorong ke kanan */}
           <div className="flex-grow-1" />
 
           {/* Curah Hujan dan GPS Button */}
-          <Form className="d-flex align-items-center gap-2 me-4">
+          <Form className="d-flex align-items-center gap-3 me-2">
             {curahHujan !== null && !loadingCuaca && (
-              <div style={{ fontSize: '0.9rem', fontWeight: '500', color: '#2e7d32' }}>
-                Curah hujan di <strong>{lokasi.label}</strong>: {getCurahHujanDesc(curahHujan)}
+              <div
+                style={{
+                  fontSize: '1rem',
+                  fontWeight: '600',
+                  color: '#d4edda',
+                  backgroundColor: 'rgba(0, 100, 0, 0.7)',
+                  padding: '6px 12px',
+                  borderRadius: 12,
+                  userSelect: 'none',
+                  minWidth: 180,
+                  textAlign: 'center',
+                }}
+                title={`Curah hujan saat ini di lokasi ${lokasi.label}`}
+              >
+                💧 {getCurahHujanDesc(curahHujan)}
               </div>
             )}
             <Button
-              variant="outline-primary"
-              size="sm"
-              style={{ marginLeft: '1rem', marginRight: '1rem' }}
+              variant="outline-light"
+              size="md"
+              style={{ fontWeight: '600', minWidth: 140, borderRadius: 8 }}
               onClick={gunakanGPS}
               disabled={loadingCuaca}
+              aria-label="Cari lokasi dengan GPS"
             >
-              {loadingCuaca ? 'Memuat...' : 'Gunakan GPS'}
+              {loadingCuaca ? 'Memuat...' : '📍 Cari Lokasi Saya'}
             </Button>
           </Form>
 
           {/* Dropdown Nama User & Logout */}
-          <Dropdown align="end" className="me-3">
+          <Dropdown align="end" className="me-1">
             <Dropdown.Toggle
-              variant="outline-danger"
+              variant="outline-light"
               id="dropdown-basic"
-              style={{ fontWeight: '600', cursor: 'pointer' }}
+              style={{
+                fontWeight: '600',
+                cursor: 'pointer',
+                minWidth: 100,
+                borderRadius: 8,
+                userSelect: 'none',
+              }}
             >
-              {namaUser}
+              👩‍🌾 {namaUser}
             </Dropdown.Toggle>
 
-            <Dropdown.Menu>
-              <Dropdown.Item onClick={handleLogout} className="text-danger">
-                Logout
+            <Dropdown.Menu style={{ minWidth: 120 }}>
+              <Dropdown.Item
+                onClick={handleLogout}
+                className="text-danger"
+                style={{ fontWeight: '600' }}
+              >
+                Keluar
               </Dropdown.Item>
             </Dropdown.Menu>
           </Dropdown>
@@ -240,21 +263,39 @@ function Layout({ children }) {
         onHide={toggleSidebar}
         backdrop={true}
         scroll={false}
-        style={{ width: '250px' }}
+        style={{ width: '260px' }}
       >
         <Offcanvas.Header closeButton>
-          <Offcanvas.Title>Menu</Offcanvas.Title>
+          <Offcanvas.Title style={{ fontWeight: '700', fontSize: '1.4rem' }}>Menu</Offcanvas.Title>
         </Offcanvas.Header>
         <Offcanvas.Body>
-          <Nav className="flex-column fs-5">
-            <Nav.Link as={Link} to="/dashboard" onClick={toggleSidebar}>
-              Dashboard
+          <Nav className="flex-column fs-5" style={{ gap: '1.2rem' }}>
+            <Nav.Link
+              as={Link}
+              to="/dashboard"
+              onClick={toggleSidebar}
+              style={{ padding: '12px 16px', borderRadius: 8 }}
+              className="text-success fw-semibold"
+            >
+              🏠 Dashboard
             </Nav.Link>
-            <Nav.Link as={Link} to="/price-range" onClick={toggleSidebar}>
-              Harga
+            <Nav.Link
+              as={Link}
+              to="/price-range"
+              onClick={toggleSidebar}
+              style={{ padding: '12px 16px', borderRadius: 8 }}
+              className="text-success fw-semibold"
+            >
+              💰 Harga
             </Nav.Link>
-            <Nav.Link as={Link} to="/deteksi-penyakit" onClick={toggleSidebar}>
-              Deteksi Penyakit
+            <Nav.Link
+              as={Link}
+              to="/deteksi-penyakit"
+              onClick={toggleSidebar}
+              style={{ padding: '12px 16px', borderRadius: 8 }}
+              className="text-success fw-semibold"
+            >
+              🐞 Deteksi Penyakit
             </Nav.Link>
           </Nav>
         </Offcanvas.Body>
@@ -266,7 +307,8 @@ function Layout({ children }) {
           marginTop: '70px',
           padding: '2rem 3rem',
           minHeight: 'calc(100vh - 70px - 50px)',
-          backgroundColor: '#f5f7fa',
+          backgroundColor: '#e9f5ea',
+          fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
         }}
       >
         <Container fluid>
@@ -280,17 +322,18 @@ function Layout({ children }) {
       <footer
         style={{
           height: '50px',
-          backgroundColor: 'white',
-          borderTop: '1px solid #eaeaea',
+          backgroundColor: '#d4edda',
+          borderTop: '1px solid #a8d5a8',
           textAlign: 'center',
           lineHeight: '50px',
-          color: '#777',
-          fontWeight: '500',
-          fontSize: '0.9rem',
+          color: '#2e7d32',
+          fontWeight: '600',
+          fontSize: '1rem',
           userSelect: 'none',
+          fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
         }}
       >
-        &copy; 2025 PetaniCerdas — All rights reserved.
+        &copy; 2025 PetaniCerdas — Semua hak dilindungi.
       </footer>
 
       {/* Error alert */}
@@ -299,9 +342,9 @@ function Layout({ children }) {
           variant="danger"
           onClose={() => setError(null)}
           dismissible
-          style={{ position: 'fixed', bottom: 10, right: 10, minWidth: 250 }}
+          style={{ position: 'fixed', bottom: 10, right: 10, minWidth: 280, fontSize: '0.9rem' }}
         >
-          {error}
+          ⚠️ {error}
         </Alert>
       )}
     </>
