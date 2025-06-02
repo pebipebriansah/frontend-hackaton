@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Row, Col, Card, Button, Alert, Spinner } from 'react-bootstrap';
 import { Droplet, Mic, TrendingUp, TrendingDown } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 
 function DashboardContent({ lokasi, curahHujan, loading }) {
   const [hargaBulanIni, setHargaBulanIni] = useState(25000);
@@ -232,7 +233,9 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
             }}
           >
             <strong>Rekomendasi:</strong>
-            <div style={{ marginTop: '0.5rem' }}>{recommendation}</div>
+            <div style={{ marginTop: '0.5rem' }}>
+              <ReactMarkdown>{recommendation}</ReactMarkdown>
+            </div>
           </Card>
         )}
       </Card>
