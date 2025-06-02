@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Row, Col, Card, Button, Alert, Spinner } from 'react-bootstrap';
 import { Droplet, Mic, TrendingUp, TrendingDown } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
 
 function DashboardContent({ lokasi, curahHujan, loading }) {
   const [hargaBulanIni, setHargaBulanIni] = useState(25000);
@@ -31,9 +32,7 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
 
     try {
       const SpeechSDK = window.SpeechSDK;
-      if (!SpeechSDK) {
-        throw new Error('Speech SDK belum tersedia.');
-      }
+      if (!SpeechSDK) throw new Error('Speech SDK belum tersedia.');
 
       const speechConfig = SpeechSDK.SpeechConfig.fromSubscription(
         '2NJiSLaOf1eIrxW3bQrR7jT8DFvFr1cxt7us0ArGY00HL6cbBn8uJQQJ99BEAC3pKaRXJ3w3AAAYACOG1yNZ',
@@ -60,9 +59,7 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
               }
             );
 
-            if (!response.ok) {
-              throw new Error(`HTTP error: ${response.status}`);
-            }
+            if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
 
             const data = await response.json();
             setRecommendation(data.rekomendasi || 'Tidak ada rekomendasi ditemukan.');
@@ -221,10 +218,8 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
             style={{
               maxHeight: '320px',
               overflowY: 'auto',
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-word',
               fontSize: '1rem',
-              lineHeight: '1.5',
+              lineHeight: '1.6',
               borderRadius: '12px',
               backgroundColor: '#e6f4ea',
               color: '#2e4a1f',
@@ -234,7 +229,9 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
           >
             <strong>Rekomendasi:</strong>
             <div style={{ marginTop: '0.5rem' }}>
-              <ReactMarkdown>{recommendation}</ReactMarkdown>
+              <ReactMarkdown rehypePlugins={[rehypeRaw]}>
+                {recommendation}
+              </ReactMarkdown>
             </div>
           </Card>
         )}
