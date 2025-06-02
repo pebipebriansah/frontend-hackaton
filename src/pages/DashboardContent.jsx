@@ -5,7 +5,6 @@ import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 
 function DashboardContent({ lokasi, curahHujan, loading }) {
-  // Ganti ini sesuai data user kamu / session
   const idPetani = 1;
 
   const [hargaBulanIni] = useState(25000);
@@ -14,10 +13,10 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
   const [listening, setListening] = useState(false);
   const [recognizedText, setRecognizedText] = useState('');
   const [recommendation, setRecommendation] = useState('');
+  const [weatherRecommendation, setWeatherRecommendation] = useState('');
   const [fetchingRecommendation, setFetchingRecommendation] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Muat Speech SDK sekali saat mount
   useEffect(() => {
     if (!window.SpeechSDK) {
       const script = document.createElement('script');
@@ -28,7 +27,6 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
     }
   }, []);
 
-  // Fungsi deskripsi curah hujan
   const getCurahHujanDesc = (value) => {
     if (value === 0) return 'tidak ada hujan';
     if (value < 2.5) return 'hujan ringan';
@@ -36,7 +34,6 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
     return 'hujan lebat';
   };
 
-  // Fungsi rekomendasi cuaca lokal berdasarkan curah hujan (fallback)
   const getRekomendasiCuaca = (curah) => {
     if (curah > 7) {
       return (
@@ -47,11 +44,10 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
     return 'Cuaca normal, tidak perlu tindakan khusus.';
   };
 
-  // Fungsi kirim data cuaca ke backend FastAPI dan ambil rekomendasi
   const sendCuacaToBackend = async (cuacaData) => {
     setFetchingRecommendation(true);
     setErrorMsg('');
-    setRecommendation('');
+    setWeatherRecommendation('');
     try {
       const response = await fetch('https://backendpetani-h5hwb3dzaydhcbgr.eastasia-01.azurewebsites.net/cuaca/', {
         method: 'POST',
@@ -62,26 +58,23 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
       if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
 
       const data = await response.json();
-      // backend sudah kirim rekomendasi di field `rekomendasi`
-      setRecommendation(data.rekomendasi || 'Tidak ada rekomendasi ditemukan.');
+      setWeatherRecommendation(data.rekomendasi || 'Tidak ada rekomendasi cuaca ditemukan.');
     } catch (error) {
       console.error('Fetch error:', error);
-      setErrorMsg('Gagal mengambil rekomendasi dari backend. Menampilkan rekomendasi lokal.');
-      // fallback ke rekomendasi lokal
-      setRecommendation(getRekomendasiCuaca(parseFloat(cuacaData.curah_hujan)));
+      setErrorMsg('Gagal mengambil rekomendasi cuaca dari backend. Menampilkan rekomendasi lokal.');
+      setWeatherRecommendation(getRekomendasiCuaca(parseFloat(cuacaData.curah_hujan)));
     } finally {
       setFetchingRecommendation(false);
     }
   };
 
-  // useEffect untuk otomatis kirim data cuaca ke backend setiap curahHujan dan lokasi berubah (dan bukan loading)
   useEffect(() => {
     if (loading || curahHujan == null || !lokasi) return;
 
     const cuacaData = {
       id_petani: idPetani,
       lokasi: lokasi.label || lokasi,
-      latitude: lokasi.latitude || 0,    // pastikan props lokasi punya latitude, longitude
+      latitude: lokasi.latitude || 0,
       longitude: lokasi.longitude || 0,
       curah_hujan: parseFloat(curahHujan),
       created_at: new Date().toISOString(),
@@ -90,7 +83,6 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
     sendCuacaToBackend(cuacaData);
   }, [curahHujan, lokasi, loading]);
 
-  // Fungsi fetch rekomendasi dari hasil speech-to-text (fetch ke backend OpenAI)
   const fetchSpeechRecommendation = async (text) => {
     setFetchingRecommendation(true);
     setErrorMsg('');
@@ -118,7 +110,6 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
     }
   };
 
-  // Fungsi mulai mendengarkan suara dan proses speech to text
   const startListening = async () => {
     setListening(true);
     setRecognizedText('');
@@ -213,9 +204,24 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
         </Row>
       </Card>
 
-      {/* Tombol dan Info Speech Recognition */}
+      {/* Card Rekomendasi Cuaca */}
       <Card className="mb-5 p-4 shadow-sm" style={{ borderRadius: '18px' }}>
-        <h2 className="mb-4 fw-bold text-center">Rekomendasi Tanaman</h2>
+        <h2 className="mb-4 fw-bold text-center">Rekomendasi Cuaca</h2>
+        {fetchingRecommendation && (
+          <div className="text-center my-3">
+            <Spinner animation="border" size="sm" /> Mengambil rekomendasi cuaca...
+          </div>
+        )}
+        {weatherRecommendation && !fetchingRecommendation && (
+          <Card className="p-3 mt-3 shadow-sm" style={{ borderRadius: '18px' }}>
+            <ReactMarkdown rehypePlugins={[rehypeRaw]}>{weatherRecommendation}</ReactMarkdown>
+          </Card>
+        )}
+      </Card>
+
+      {/* Card Rekomendasi OpenAI */}
+      <Card className="mb-5 p-4 shadow-sm" style={{ borderRadius: '18px' }}>
+        <h2 className="mb-4 fw-bold text-center">Rekomendasi Tanaman (via Suara)</h2>
 
         <div className="text-center mb-3">
           <Button
