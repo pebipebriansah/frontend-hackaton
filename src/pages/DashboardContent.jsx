@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Row, Col, Card, Button, Alert, Spinner } from 'react-bootstrap';
+import { Container, Row, Col, Card, Button, Alert, Spinner, Stack } from 'react-bootstrap';
 import { Droplet, Mic, TrendingUp, TrendingDown } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
@@ -13,6 +13,7 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
   const [fetchingRecommendation, setFetchingRecommendation] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
+  // Muat Speech SDK
   useEffect(() => {
     if (!window.SpeechSDK) {
       const script = document.createElement('script');
@@ -22,6 +23,42 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
       document.body.appendChild(script);
     }
   }, []);
+
+  // Ambil rekomendasi otomatis berdasarkan curah hujan
+  useEffect(() => {
+    if (curahHujan == null || loading) return;
+
+    const fetchWeatherRecommendation = async () => {
+      setFetchingRecommendation(true);
+      setErrorMsg('');
+      setRecommendation('');
+
+      try {
+        const response = await fetch(
+          'https://backendpetani-h5hwb3dzaydhcbgr.eastasia-01.azurewebsites.net/rekomendasi/',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              keluhan: `Curah hujan saat ini adalah ${curahHujan} mm (${getCurahHujanDesc(curahHujan)})`,
+            }),
+          }
+        );
+
+        if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+
+        const data = await response.json();
+        setRecommendation(data.rekomendasi || 'Tidak ada rekomendasi cuaca ditemukan.');
+      } catch (error) {
+        console.error('Fetch error:', error);
+        setErrorMsg('Gagal mengambil rekomendasi cuaca. Silakan coba lagi.');
+      } finally {
+        setFetchingRecommendation(false);
+      }
+    };
+
+    fetchWeatherRecommendation();
+  }, [curahHujan, loading]);
 
   const startListening = async () => {
     setListening(true);
@@ -48,6 +85,8 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
         if (result.reason === SpeechSDK.ResultReason.RecognizedSpeech) {
           setRecognizedText(result.text);
           setFetchingRecommendation(true);
+          setRecommendation('');
+          setErrorMsg('');
 
           try {
             const response = await fetch(
@@ -89,9 +128,10 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
     return 'hujan lebat';
   };
 
-  const curahHujanDisplay = !loading && curahHujan != null
-    ? `${parseFloat(curahHujan || 0)} mm (${getCurahHujanDesc(parseFloat(curahHujan || 0))})`
-    : 'Memuat...';
+  const curahHujanDisplay =
+    !loading && curahHujan != null
+      ? `${parseFloat(curahHujan || 0)} mm (${getCurahHujanDesc(parseFloat(curahHujan || 0))})`
+      : 'Memuat...';
 
   const cards = [
     {
@@ -115,69 +155,70 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
   ];
 
   return (
-    <>
-      <h1 className="mb-4 fw-bold text-success text-center">Dashboard Petani</h1>
+    <Container className="py-4">
+      <h1 className="mb-5 fw-bold text-success text-center">Dashboard Petani</h1>
 
-      <Row className="g-4 mb-4">
-        {cards.map((card, idx) => (
-          <Col key={idx} md={4}>
-            <Card
-              className="h-100 shadow-sm"
-              style={{
-                borderRadius: '18px',
-                backgroundColor: card.color,
-                cursor: 'pointer',
-                transition: 'transform 0.3s, box-shadow 0.3s',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-8px)';
-                e.currentTarget.style.boxShadow = '0 12px 30px rgba(0,0,0,0.2)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.08)';
-              }}
-            >
-              <Card.Body>
-                <div className="d-flex align-items-center gap-3 mb-3">
-                  {card.icon}
-                  <Card.Title className="fw-semibold m-0" style={{ fontSize: '1.3rem' }}>
-                    {card.title}
-                  </Card.Title>
-                </div>
-                <Card.Text className="fw-bold" style={{ fontSize: '1.9rem', color: '#333' }}>
-                  {card.value}
-                </Card.Text>
-              </Card.Body>
-            </Card>
-          </Col>
-        ))}
-      </Row>
+      {/* Kartu Info */}
+      <Card className="mb-5 p-4 shadow-sm" style={{ borderRadius: '18px' }}>
+        <Row className="g-4">
+          {cards.map((card, idx) => (
+            <Col key={idx} md={4}>
+              <Card
+                className="h-100 shadow-sm"
+                style={{
+                  borderRadius: '18px',
+                  backgroundColor: card.color,
+                  cursor: 'pointer',
+                  transition: 'transform 0.3s, box-shadow 0.3s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-8px)';
+                  e.currentTarget.style.boxShadow = '0 12px 30px rgba(0,0,0,0.2)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.08)';
+                }}
+              >
+                <Card.Body>
+                  <div className="d-flex align-items-center gap-3 mb-3">
+                    {card.icon}
+                    <Card.Title className="fw-semibold m-0" style={{ fontSize: '1.3rem' }}>
+                      {card.title}
+                    </Card.Title>
+                  </div>
+                  <Card.Text className="fw-bold" style={{ fontSize: '1.9rem', color: '#333' }}>
+                    {card.value}
+                  </Card.Text>
+                </Card.Body>
+              </Card>
+            </Col>
+          ))}
+        </Row>
+      </Card>
 
+      {/* Input Suara dan Rekomendasi */}
       <Card
-        className="p-4 mx-auto"
+        className="mx-auto shadow-sm"
         style={{
           maxWidth: '600px',
           borderRadius: '18px',
-          boxShadow: '0 8px 25px rgba(0,0,0,0.1)',
+          padding: '2rem 2.5rem',
           backgroundColor: '#fefefe',
+          boxShadow: '0 8px 25px rgba(0,0,0,0.1)',
         }}
       >
         <h4 className="mb-4 fw-semibold text-center text-primary">Input Suara Keluhan Petani</h4>
 
-        <div className="d-flex justify-content-center mb-3">
+        <div className="d-flex justify-content-center mb-4">
           <Button
             variant={listening ? 'danger' : 'primary'}
             onClick={startListening}
             disabled={listening || fetchingRecommendation}
-            style={{ minWidth: '160px', fontWeight: '600', fontSize: '1.1rem' }}
+            style={{ minWidth: '180px', fontWeight: '600', fontSize: '1.1rem' }}
           >
             <Mic className="me-2" size={22} />
-            {listening
-              ? 'Mendengarkan...'
-              : fetchingRecommendation
-              ? 'Memproses...'
-              : 'Mulai Bicara'}
+            {listening ? 'Mendengarkan...' : fetchingRecommendation ? 'Memproses...' : 'Mulai Bicara'}
           </Button>
         </div>
 
@@ -214,7 +255,7 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
 
         {recommendation && !fetchingRecommendation && (
           <Card
-            className="mb-3 p-3"
+            className="mb-0 p-3"
             style={{
               maxHeight: '320px',
               overflowY: 'auto',
@@ -229,14 +270,12 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
           >
             <strong>Rekomendasi:</strong>
             <div style={{ marginTop: '0.5rem' }}>
-              <ReactMarkdown rehypePlugins={[rehypeRaw]}>
-                {recommendation}
-              </ReactMarkdown>
+              <ReactMarkdown rehypePlugins={[rehypeRaw]}>{recommendation}</ReactMarkdown>
             </div>
           </Card>
         )}
       </Card>
-    </>
+    </Container>
   );
 }
 
