@@ -74,42 +74,39 @@ function Layout({ children }) {
 
   // Fungsi menyimpan data cuaca ke backend
   const simpanDataCuaca = async (rainValue, lat, lon, lokasiLabel) => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        setError('Token tidak ditemukan, silakan login ulang');
-        return;
-      }
-
-      const tanggal = new Date().toISOString().split('T')[0];
-
-      const response = await fetch('https://backendpetani-h5hwb3dzaydhcbgr.eastasia-01.azurewebsites.net/cuaca/cuaca/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          id_petani: parseInt(idPetani, 10),
-          lokasi: lokasiLabel,
-          latitude: lat,
-          longitude: lon,
-          curah_hujan: rainValue,
-          tanggal,
-        }),
-      });
-
-      if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.message || 'Gagal menyimpan data cuaca');
-      }
-
-      // Optional: konfirmasi simpan berhasil
-      console.log('Data cuaca berhasil disimpan ke backend');
-    } catch (err) {
-      setError(err.message);
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setError('Token tidak ditemukan, silakan login ulang');
+      return;
     }
-  };
+
+    const response = await fetch('https://backendpetani-h5hwb3dzaydhcbgr.eastasia-01.azurewebsites.net/cuaca/cuaca/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        id_petani: parseInt(idPetani, 10),
+        lokasi: lokasiLabel,
+        latitude: lat,
+        longitude: lon,
+        curah_hujan: rainValue,
+      }),
+    });
+
+    if (!response.ok) {
+      const errData = await response.json();
+      throw new Error(errData.message || 'Gagal menyimpan data cuaca');
+    }
+
+    console.log('Data cuaca berhasil disimpan ke backend');
+  } catch (err) {
+    setError(err.message);
+  }
+};
+
 
   // Fungsi mengambil lokasi dengan GPS
   const gunakanGPS = () => {
