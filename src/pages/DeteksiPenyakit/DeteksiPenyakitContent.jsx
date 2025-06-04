@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from 'react';
-import { Card, Alert, Button } from 'react-bootstrap';
-import 'bootstrap-icons/font/bootstrap-icons.css';
+import { Card, Alert, Button, Row, Col, Spinner } from 'react-bootstrap';
+import { CameraVideo, Camera, Upload, Play, Stop } from 'react-bootstrap-icons';
 
 function DeteksiPenyakitContent() {
   const videoRef = useRef(null);
@@ -19,17 +19,14 @@ function DeteksiPenyakitContent() {
     setError(null);
     setResult(null);
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      navigator.mediaDevices
-        .getUserMedia({ video: true })
-        .then((stream) => {
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
           if (videoRef.current) {
             videoRef.current.srcObject = stream;
             videoRef.current.play();
           }
         })
-        .catch((err) => {
-          setError('Tidak bisa mengakses kamera: ' + err.message);
-        });
+        .catch(err => setError('Tidak bisa mengakses kamera: ' + err.message));
     } else {
       setError('Browser tidak mendukung kamera');
     }
@@ -62,7 +59,7 @@ function DeteksiPenyakitContent() {
       setError(null);
 
       const reader = new FileReader();
-      reader.onload = (event) => {
+      reader.onload = event => {
         setImageSrc(event.target.result);
       };
       reader.readAsDataURL(file);
@@ -79,7 +76,7 @@ function DeteksiPenyakitContent() {
     setError(null);
 
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = event => {
       setImageSrc(event.target.result);
     };
     reader.readAsDataURL(file);
@@ -104,7 +101,6 @@ function DeteksiPenyakitContent() {
       });
 
       const text = await response.text();
-
       if (!response.ok) {
         let errMsg = 'Gagal deteksi penyakit';
         try {
@@ -116,13 +112,7 @@ function DeteksiPenyakitContent() {
         throw new Error(errMsg);
       }
 
-      let data;
-      try {
-        data = JSON.parse(text);
-      } catch {
-        throw new Error('Response bukan JSON valid');
-      }
-
+      const data = JSON.parse(text);
       if (data.success) {
         setResult(data);
       } else {
@@ -149,10 +139,8 @@ function DeteksiPenyakitContent() {
     canvas.toBlob(blob => {
       if (!blob) return;
       const file = new File([blob], "frame.png", { type: "image/png" });
-
       if (imageSrc) URL.revokeObjectURL(imageSrc);
       setImageSrc(URL.createObjectURL(file));
-
       uploadImage(file);
     }, 'image/png');
   };
@@ -192,66 +180,84 @@ function DeteksiPenyakitContent() {
   }, []);
 
   return (
-    <div className="container py-4">
-      <div className="mb-4 d-flex flex-wrap gap-3 justify-content-center">
-        <Button variant="success" size="lg" onClick={startCamera} disabled={!!imageFile || isRealtime}>
-          <i className="bi bi-camera-video"></i> Buka Kamera
+    <>
+      <h4 className="mb-3">Deteksi Penyakit Daun Cabai</h4>
+      <div className="d-flex flex-wrap gap-2 mb-4">
+        <Button variant="success" onClick={startCamera} disabled={!!imageFile || isRealtime}>
+          <CameraVideo className="me-1" /> Buka Kamera
         </Button>
-        <Button variant="primary" size="lg" onClick={capturePhoto} disabled={!videoRef.current || !videoRef.current.srcObject || !!imageFile || isRealtime}>
-          <i className="bi bi-camera"></i> Foto Daun Sekarang
+        <Button variant="primary" onClick={capturePhoto} disabled={!videoRef.current?.srcObject || !!imageFile || isRealtime}>
+          <Camera className="me-1" /> Ambil Foto
         </Button>
-        <div>
-          <label htmlFor="fileInput" className="btn btn-secondary btn-lg">
-            <i className="bi bi-upload"></i> Pilih Gambar
-          </label>
-          <input id="fileInput" type="file" accept="image/*" onChange={handleFileChange} disabled={imageFile || isRealtime} style={{ display: 'none' }} />
-        </div>
+        <label className="btn btn-outline-secondary mb-0">
+          <Upload className="me-1" /> Upload Gambar
+          <input type="file" accept="image/*" onChange={handleFileChange} hidden disabled={imageFile || isRealtime} />
+        </label>
         {!isRealtime ? (
-          <Button variant="warning" size="lg" onClick={startRealtimeDetection} disabled={!videoRef.current || !videoRef.current.srcObject}>
-            <i className="bi bi-play-circle"></i> Mulai Deteksi Otomatis
+          <Button variant="warning" onClick={startRealtimeDetection} disabled={!videoRef.current?.srcObject}>
+            <Play className="me-1" /> Mulai Realtime
           </Button>
         ) : (
-          <Button variant="danger" size="lg" onClick={stopRealtimeDetection}>
-            <i className="bi bi-stop-circle"></i> Stop Deteksi Otomatis
+          <Button variant="danger" onClick={stopRealtimeDetection}>
+            <Stop className="me-1" /> Stop Realtime
           </Button>
         )}
       </div>
 
-      {error && <Alert variant="danger" className="text-center">{error}</Alert>}
-      {loading && <Alert variant="info" className="text-center">Sedang memeriksa gambar daun...</Alert>}
-
-      <div className="mb-3 text-center">
-        <video ref={videoRef} style={{ width: '100%', maxHeight: '400px', borderRadius: '12px', boxShadow: '0 0 10px rgba(0,0,0,0.2)' }} autoPlay muted playsInline />
-      </div>
-
-      {imageSrc && (
-        <div className="mb-4 text-center">
-          <h5>📷 Gambar Daun</h5>
-          <img src={imageSrc} alt="Preview" style={{ width: '100%', maxWidth: '500px', borderRadius: '12px', border: '2px solid #ccc' }} />
-        </div>
+      {error && <Alert variant="danger">{error}</Alert>}
+      {loading && (
+        <Alert variant="info">
+          <Spinner animation="border" size="sm" className="me-2" />
+          Memproses gambar...
+        </Alert>
       )}
 
-      {result && (
-        <Card className="mb-4 shadow">
-          <Card.Body>
-            <Card.Title className="text-success fw-bold">✅ Hasil Deteksi</Card.Title>
-            <Card.Text>
-              <p><strong>Jenis Penyakit:</strong> {result.data.label}</p>
-              <p><strong>Tingkat Keyakinan:</strong></p>
-              <ul>
-                {result.data.confidences.map((item, index) => (
-                  <li key={index}>
-                    {item.label}: <strong>{(item.confidence * 100).toFixed(2)}%</strong>
-                  </li>
-                ))}
-              </ul>
-            </Card.Text>
-          </Card.Body>
-        </Card>
-      )}
+      <video
+        ref={videoRef}
+        style={{ width: '100%', maxHeight: '350px', borderRadius: '12px', marginBottom: '1rem', border: '1px solid #ccc' }}
+        autoPlay
+        muted
+        playsInline
+      />
+
+      <Row>
+        {imageSrc && (
+          <Col md={6}>
+            <Card className="mb-3 shadow-sm">
+              <Card.Header>Gambar Preview</Card.Header>
+              <Card.Img variant="top" src={imageSrc} style={{ maxHeight: '300px', objectFit: 'cover' }} />
+            </Card>
+          </Col>
+        )}
+        {result && (
+          <Col md={6}>
+            <Card className="mb-3 shadow-sm">
+              <Card.Header>Hasil Deteksi</Card.Header>
+              <Card.Body>
+                <Card.Text>
+                  <strong>Label:</strong> {result.data.label} <br />
+                  <strong>Confidence:</strong>
+                  {result.data.confidences.map((item, index) => (
+                    <div key={index} className="mb-2">
+                      <div className="d-flex justify-content-between">
+                        <span><strong>{item.label}</strong></span>
+                        <span>{(item.confidence * 100).toFixed(2)}%</span>
+                      </div>
+                      <ProgressBar now={item.confidence * 100} label={`${(item.confidence * 100).toFixed(1)}%`} variant={
+                        item.confidence >= 0.8 ? 'success' :
+                        item.confidence >= 0.5 ? 'warning' : 'danger'
+                      } />
+                    </div>
+                  ))}
+                </Card.Text>
+              </Card.Body>
+            </Card>
+          </Col>
+        )}
+      </Row>
 
       <canvas ref={canvasRef} style={{ display: 'none' }} />
-    </div>
+    </>
   );
 }
 
