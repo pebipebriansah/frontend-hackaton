@@ -102,8 +102,7 @@ function DeteksiPenyakitContent() {
     setResult(null);
 
     const formData = new FormData();
-    formData.append('image', file);
-
+    formData.append('file', file);
     try {
       const response = await fetch('https://backendpetani-h5hwb3dzaydhcbgr.eastasia-01.azurewebsites.net/deteksi/predict', {
         method: 'POST',
