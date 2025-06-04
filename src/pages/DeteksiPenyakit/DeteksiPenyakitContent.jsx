@@ -105,7 +105,7 @@ function DeteksiPenyakitContent() {
     formData.append('image', file);
 
     try {
-      const response = await fetch('/api/deteksi-penyakit', {
+      const response = await fetch('https://backendpetani-h5hwb3dzaydhcbgr.eastasia-01.azurewebsites.net/deteksi/predict', {
         method: 'POST',
         body: formData,
       });
@@ -116,7 +116,7 @@ function DeteksiPenyakitContent() {
         let errMsg = 'Gagal deteksi penyakit';
         try {
           const errJson = JSON.parse(text);
-          errMsg = errJson.error || errMsg;
+          errMsg = errJson.message || errMsg; // Menggunakan message dari respons
         } catch {
           errMsg = text || errMsg;
         }
@@ -129,7 +129,13 @@ function DeteksiPenyakitContent() {
       } catch {
         throw new Error('Response bukan JSON valid');
       }
-      setResult(data);
+
+      // Memastikan respons memiliki struktur yang benar
+      if (data.success) {
+        setResult(data);
+      } else {
+        throw new Error(data.message || 'Gagal mendeteksi penyakit');
+      }
     } catch (err) {
       setError(err.message);
     } finally {
