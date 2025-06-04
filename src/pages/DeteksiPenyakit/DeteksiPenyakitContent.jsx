@@ -1,11 +1,12 @@
 import { useRef, useState, useEffect } from 'react';
 import { Card, Alert, Button } from 'react-bootstrap';
+import 'bootstrap-icons/font/bootstrap-icons.css';
 
 function DeteksiPenyakitContent() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const intervalRef = useRef(null);
-  const ongoingRequest = useRef(false); // untuk mencegah request bertumpuk
+  const ongoingRequest = useRef(false);
 
   const [imageSrc, setImageSrc] = useState(null);
   const [imageFile, setImageFile] = useState(null);
@@ -14,7 +15,6 @@ function DeteksiPenyakitContent() {
   const [result, setResult] = useState(null);
   const [isRealtime, setIsRealtime] = useState(false);
 
-  // Start kamera
   const startCamera = () => {
     setError(null);
     setResult(null);
@@ -35,7 +35,6 @@ function DeteksiPenyakitContent() {
     }
   };
 
-  // Stop kamera dan realtime detection
   const stopCamera = () => {
     if (videoRef.current && videoRef.current.srcObject) {
       videoRef.current.srcObject.getTracks().forEach(track => track.stop());
@@ -43,9 +42,8 @@ function DeteksiPenyakitContent() {
     }
   };
 
-  // Capture foto sekali
   const capturePhoto = () => {
-    if (isRealtime) return; // disable jika realtime aktif
+    if (isRealtime) return;
 
     const video = videoRef.current;
     const canvas = canvasRef.current;
@@ -63,7 +61,6 @@ function DeteksiPenyakitContent() {
       setResult(null);
       setError(null);
 
-      // Preview image
       const reader = new FileReader();
       reader.onload = (event) => {
         setImageSrc(event.target.result);
@@ -74,7 +71,6 @@ function DeteksiPenyakitContent() {
     }, 'image/png');
   };
 
-  // Handle file upload manual
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -82,7 +78,6 @@ function DeteksiPenyakitContent() {
     setResult(null);
     setError(null);
 
-    // Preview
     const reader = new FileReader();
     reader.onload = (event) => {
       setImageSrc(event.target.result);
@@ -92,9 +87,8 @@ function DeteksiPenyakitContent() {
     uploadImage(file);
   };
 
-  // Upload gambar ke backend dan proses response
   const uploadImage = async (file) => {
-    if (ongoingRequest.current) return; // cegah request tumpuk
+    if (ongoingRequest.current) return;
     ongoingRequest.current = true;
 
     setLoading(true);
@@ -115,7 +109,7 @@ function DeteksiPenyakitContent() {
         let errMsg = 'Gagal deteksi penyakit';
         try {
           const errJson = JSON.parse(text);
-          errMsg = errJson.message || errMsg; // Menggunakan message dari respons
+          errMsg = errJson.message || errMsg;
         } catch {
           errMsg = text || errMsg;
         }
@@ -129,7 +123,6 @@ function DeteksiPenyakitContent() {
         throw new Error('Response bukan JSON valid');
       }
 
-      // Memastikan respons memiliki struktur yang benar
       if (data.success) {
         setResult(data);
       } else {
@@ -143,12 +136,10 @@ function DeteksiPenyakitContent() {
     }
   };
 
-  // Capture frame untuk realtime detection
   const captureFrameRealtime = () => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
-    if (!video || !canvas) return;
-    if (ongoingRequest.current) return; // skip jika masih request sebelumnya berjalan
+    if (!video || !canvas || ongoingRequest.current) return;
 
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
@@ -159,17 +150,13 @@ function DeteksiPenyakitContent() {
       if (!blob) return;
       const file = new File([blob], "frame.png", { type: "image/png" });
 
-      // Revoke object URL sebelumnya supaya tidak bocor memori
-      if (imageSrc) {
-        URL.revokeObjectURL(imageSrc);
-      }
+      if (imageSrc) URL.revokeObjectURL(imageSrc);
       setImageSrc(URL.createObjectURL(file));
 
       uploadImage(file);
     }, 'image/png');
   };
 
-  // Mulai realtime detection dengan interval
   const startRealtimeDetection = () => {
     if (!videoRef.current || !videoRef.current.srcObject) {
       setError('Kamera belum aktif');
@@ -179,100 +166,82 @@ function DeteksiPenyakitContent() {
     setResult(null);
     setIsRealtime(true);
 
-    // Capture frame tiap 1.5 detik
     intervalRef.current = setInterval(() => {
       captureFrameRealtime();
     }, 1500);
   };
 
-  // Stop realtime detection
   const stopRealtimeDetection = () => {
     setIsRealtime(false);
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
-    // Reset preview dan hasil realtime
     setImageSrc(null);
     setResult(null);
     setLoading(false);
     ongoingRequest.current = false;
   };
 
-  // Bersihkan saat komponen unmount
   useEffect(() => {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
       stopCamera();
-      if (imageSrc) {
-        URL.revokeObjectURL(imageSrc);
-      }
+      if (imageSrc) URL.revokeObjectURL(imageSrc);
     };
   }, []);
 
   return (
-    <>
-      <div className="mb-3 d-flex gap-2 align-items-center flex-wrap">
-        <Button variant="success" onClick={startCamera} disabled={!!imageFile || isRealtime}>
-          Buka Kamera
+    <div className="container py-4">
+      <div className="mb-4 d-flex flex-wrap gap-3 justify-content-center">
+        <Button variant="success" size="lg" onClick={startCamera} disabled={!!imageFile || isRealtime}>
+          <i className="bi bi-camera-video"></i> Buka Kamera
         </Button>
-        <Button
-          variant="primary"
-          onClick={capturePhoto}
-          disabled={!videoRef.current || !videoRef.current.srcObject || !!imageFile || isRealtime}
-        >
-          Ambil Foto
+        <Button variant="primary" size="lg" onClick={capturePhoto} disabled={!videoRef.current || !videoRef.current.srcObject || !!imageFile || isRealtime}>
+          <i className="bi bi-camera"></i> Foto Daun Sekarang
         </Button>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={handleFileChange}
-          disabled={imageFile || isRealtime}
-          style={{ cursor: imageFile || isRealtime ? 'not-allowed' : 'pointer' }}
-        />
-
+        <div>
+          <label htmlFor="fileInput" className="btn btn-secondary btn-lg">
+            <i className="bi bi-upload"></i> Pilih Gambar
+          </label>
+          <input id="fileInput" type="file" accept="image/*" onChange={handleFileChange} disabled={imageFile || isRealtime} style={{ display: 'none' }} />
+        </div>
         {!isRealtime ? (
-          <Button variant="warning" onClick={startRealtimeDetection} disabled={!videoRef.current || !videoRef.current.srcObject}>
-            Mulai Realtime Detection
+          <Button variant="warning" size="lg" onClick={startRealtimeDetection} disabled={!videoRef.current || !videoRef.current.srcObject}>
+            <i className="bi bi-play-circle"></i> Mulai Deteksi Otomatis
           </Button>
         ) : (
-          <Button variant="danger" onClick={stopRealtimeDetection}>
-            Stop Realtime Detection
+          <Button variant="danger" size="lg" onClick={stopRealtimeDetection}>
+            <i className="bi bi-stop-circle"></i> Stop Deteksi Otomatis
           </Button>
         )}
       </div>
 
-      {error && <Alert variant="danger">{error}</Alert>}
-      {loading && <Alert variant="info">Memproses gambar...</Alert>}
+      {error && <Alert variant="danger" className="text-center">{error}</Alert>}
+      {loading && <Alert variant="info" className="text-center">Sedang memeriksa gambar daun...</Alert>}
 
-      <div className="mb-3">
-        <video
-          ref={videoRef}
-          style={{ width: '100%', maxHeight: '400px', borderRadius: '10px' }}
-          autoPlay
-          muted
-          playsInline
-        />
+      <div className="mb-3 text-center">
+        <video ref={videoRef} style={{ width: '100%', maxHeight: '400px', borderRadius: '12px', boxShadow: '0 0 10px rgba(0,0,0,0.2)' }} autoPlay muted playsInline />
       </div>
 
       {imageSrc && (
-        <div className="mb-3">
-          <h5>Gambar Preview:</h5>
-          <img src={imageSrc} alt="Preview" style={{ width: '100%', borderRadius: '10px' }} />
+        <div className="mb-4 text-center">
+          <h5>📷 Gambar Daun</h5>
+          <img src={imageSrc} alt="Preview" style={{ width: '100%', maxWidth: '500px', borderRadius: '12px', border: '2px solid #ccc' }} />
         </div>
       )}
 
       {result && (
-        <Card className="mb-3">
+        <Card className="mb-4 shadow">
           <Card.Body>
-            <Card.Title>Hasil Deteksi</Card.Title>
+            <Card.Title className="text-success fw-bold">✅ Hasil Deteksi</Card.Title>
             <Card.Text>
-              <strong>Label:</strong> {result.data.label} <br />
-              <strong>Confidence Levels:</strong>
+              <p><strong>Jenis Penyakit:</strong> {result.data.label}</p>
+              <p><strong>Tingkat Keyakinan:</strong></p>
               <ul>
                 {result.data.confidences.map((item, index) => (
                   <li key={index}>
-                    {item.label}: {(item.confidence * 100).toFixed(2)}%
+                    {item.label}: <strong>{(item.confidence * 100).toFixed(2)}%</strong>
                   </li>
                 ))}
               </ul>
@@ -282,7 +251,7 @@ function DeteksiPenyakitContent() {
       )}
 
       <canvas ref={canvasRef} style={{ display: 'none' }} />
-    </>
+    </div>
   );
 }
 
