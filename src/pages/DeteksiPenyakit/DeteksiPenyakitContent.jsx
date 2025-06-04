@@ -237,47 +237,61 @@ function DeteksiPenyakitContent() {
             </Card>
           </Col>
         )}
-        {result && (
-          <Col md={6}>
-            <Card className="mb-3 shadow-sm">
-              <Card.Header>Hasil Deteksi</Card.Header>
-              <Card.Body>
-                <Card.Text style={{ fontSize: '1.1rem', fontWeight: '600', marginBottom: '1rem' }}>
-                  <span>Label Prediksi: </span>
-                  <span style={{ color: '#2c3e50' }}>{result.data.label}</span>
-                </Card.Text>
-                <div>
-                  {result.data.confidences.map(({ label, confidence }) => {
-                    const percent = confidence * 100;
-                    let variant = 'danger';
-                    if (percent > 75) variant = 'success';
-                    else if (percent > 40) variant = 'warning';
+        {result && result.data && (
+            <Col md={6}>
+              <Card className="mb-3 shadow-sm">
+                <Card.Header>Hasil Deteksi</Card.Header>
+                <Card.Body>
+                  <Card.Text style={{ fontSize: '1.1rem', fontWeight: '600', marginBottom: '1rem' }}>
+                    <span>Label Prediksi: </span>
+                    <span style={{ color: '#2c3e50' }}>{result.data.label}</span>
+                  </Card.Text>
 
-                    return (
-                      <div key={label} style={{ marginBottom: '1rem' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '600', marginBottom: '0.25rem', color: '#34495e' }}>
-                          <span>{label}</span>
-                          <span>{percent.toFixed(2)}%</span>
+                  {/* Logging result.data.confidences */}
+                  <pre>{JSON.stringify(result.data.confidences, null, 2)}</pre>
+
+                  {result.data.confidences && result.data.confidences.length > 0 ? (
+                    result.data.confidences.map(({ label, confidence }) => {
+                      const percent = confidence * 100;
+                      let variant = 'danger';
+                      if (percent > 75) variant = 'success';
+                      else if (percent > 40) variant = 'warning';
+
+                      console.log(`Rendering ${label} with ${percent.toFixed(2)}%`);
+
+                      return (
+                        <div key={label} style={{ marginBottom: '1rem' }}>
+                          <div
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              fontWeight: '600',
+                              marginBottom: '0.25rem',
+                              color: '#34495e',
+                            }}
+                          >
+                            <span>{label}</span>
+                            <span>{percent.toFixed(2)}%</span>
+                          </div>
+                          <ProgressBar
+                            now={percent}
+                            variant={variant}
+                            style={{ height: '1.5rem', borderRadius: '0.5rem' }}
+                            animated
+                          />
                         </div>
-                        <ProgressBar
-                          now={percent}
-                          variant={variant}
-                          style={{ height: '1.5rem', borderRadius: '0.5rem' }}
-                          animated={percent > 0}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-              </Card.Body>
-            </Card>
-          </Col>
-        )}
+                      );
+                    })
+                  ) : (
+                    <p>Data confidence tidak tersedia.</p>
+                  )}
+                </Card.Body>
+              </Card>
+            </Col>
+          )}
       </Row>
-
       <canvas ref={canvasRef} style={{ display: 'none' }} />
     </>
   );
 }
-
 export default DeteksiPenyakitContent;
