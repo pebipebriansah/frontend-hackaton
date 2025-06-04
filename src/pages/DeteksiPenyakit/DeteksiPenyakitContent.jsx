@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
+import { Card, Alert, Button } from 'react-bootstrap';
 
 function DeteksiPenyakitContent() {
   const videoRef = useRef(null);
@@ -207,17 +208,16 @@ function DeteksiPenyakitContent() {
   return (
     <>
       <div className="mb-3 d-flex gap-2 align-items-center flex-wrap">
-        <button type="button" className="btn btn-success" onClick={startCamera} disabled={!!imageFile || isRealtime}>
+        <Button variant="success" onClick={startCamera} disabled={!!imageFile || isRealtime}>
           Buka Kamera
-        </button>
-        <button
-          type="button"
-          className="btn btn-primary"
+        </Button>
+        <Button
+          variant="primary"
           onClick={capturePhoto}
           disabled={!videoRef.current || !videoRef.current.srcObject || !!imageFile || isRealtime}
         >
           Ambil Foto
-        </button>
+        </Button>
         <input
           type="file"
           accept="image/*"
@@ -227,18 +227,18 @@ function DeteksiPenyakitContent() {
         />
 
         {!isRealtime ? (
-          <button className="btn btn-warning" onClick={startRealtimeDetection} disabled={!videoRef.current || !videoRef.current.srcObject}>
+          <Button variant="warning" onClick={startRealtimeDetection} disabled={!videoRef.current || !videoRef.current.srcObject}>
             Mulai Realtime Detection
-          </button>
+          </Button>
         ) : (
-          <button className="btn btn-danger" onClick={stopRealtimeDetection}>
+          <Button variant="danger" onClick={stopRealtimeDetection}>
             Stop Realtime Detection
-          </button>
+          </Button>
         )}
       </div>
 
-      {error && <div className="alert alert-danger">{error}</div>}
-      {loading && <div className="alert alert-info">Memproses gambar...</div>}
+      {error && <Alert variant="danger">{error}</Alert>}
+      {loading && <Alert variant="info">Memproses gambar...</Alert>}
 
       <div className="mb-3">
         <video
@@ -258,10 +258,22 @@ function DeteksiPenyakitContent() {
       )}
 
       {result && (
-        <div className="alert alert-success">
-          <strong>Hasil Deteksi:</strong> {result.label} <br />
-          <strong>Confidence:</strong> {(result.confidence * 100).toFixed(2)}%
-        </div>
+        <Card className="mb-3">
+          <Card.Body>
+            <Card.Title>Hasil Deteksi</Card.Title>
+            <Card.Text>
+              <strong>Label:</strong> {result.data.label} <br />
+              <strong>Confidence Levels:</strong>
+              <ul>
+                {result.data.confidences.map((item, index) => (
+                  <li key={index}>
+                    {item.label}: {(item.confidence * 100).toFixed(2)}%
+                  </li>
+                ))}
+              </ul>
+            </Card.Text>
+          </Card.Body>
+        </Card>
       )}
 
       <canvas ref={canvasRef} style={{ display: 'none' }} />
