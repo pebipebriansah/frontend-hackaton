@@ -239,18 +239,12 @@ function DeteksiPenyakitContent() {
                 <Card.Text>
                   <strong>Label:</strong> {result.data.label} <br />
                   <strong>Confidence:</strong>
-                  {result.data.confidences.map((item, index) => (
-                    <div key={index} className="mb-2">
-                      <div className="d-flex justify-content-between">
-                        <span><strong>{item.label}</strong></span>
-                        <span>{(item.confidence * 100).toFixed(2)}%</span>
-                      </div>
-                      <ProgressBar now={item.confidence * 100} label={`${(item.confidence * 100).toFixed(1)}%`} variant={
-                        item.confidence >= 0.8 ? 'success' :
-                        item.confidence >= 0.5 ? 'warning' : 'danger'
-                      } />
-                    </div>
-                  ))}
+                  <ProgressBar
+                    now={result.data.confidence * 100}
+                    label={`${(result.data.confidence * 100).toFixed(2)}%`}
+                    className="mt-2"
+                    style={{ height: '1.5rem' }}
+                  />
                 </Card.Text>
               </Card.Body>
             </Card>
