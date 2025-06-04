@@ -1,8 +1,6 @@
 import { useRef, useState, useEffect } from 'react';
-import { Card, Alert, Button, Row, Col, Spinner } from 'react-bootstrap';
+import { Card, Alert, Button, Row, Col, Spinner, ProgressBar } from 'react-bootstrap';
 import { CameraVideo, Camera, Upload, Play, Stop } from 'react-bootstrap-icons';
-import { ProgressBar } from 'react-bootstrap';
-
 
 function DeteksiPenyakitContent() {
   const videoRef = useRef(null);
@@ -20,7 +18,7 @@ function DeteksiPenyakitContent() {
   const startCamera = () => {
     setError(null);
     setResult(null);
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    if (navigator.mediaDevices?.getUserMedia) {
       navigator.mediaDevices.getUserMedia({ video: true })
         .then(stream => {
           if (videoRef.current) {
@@ -35,15 +33,30 @@ function DeteksiPenyakitContent() {
   };
 
   const stopCamera = () => {
-    if (videoRef.current && videoRef.current.srcObject) {
+    if (videoRef.current?.srcObject) {
       videoRef.current.srcObject.getTracks().forEach(track => track.stop());
       videoRef.current.srcObject = null;
     }
   };
 
+  const resetAll = () => {
+    stopCamera();
+    if (imageSrc) URL.revokeObjectURL(imageSrc);
+    setImageSrc(null);
+    setImageFile(null);
+    setResult(null);
+    setError(null);
+    setLoading(false);
+    ongoingRequest.current = false;
+    setIsRealtime(false);
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  };
+
   const capturePhoto = () => {
     if (isRealtime) return;
-
     const video = videoRef.current;
     const canvas = canvasRef.current;
     if (!video || !canvas) return;
@@ -62,6 +75,7 @@ function DeteksiPenyakitContent() {
 
       const reader = new FileReader();
       reader.onload = event => {
+        if (imageSrc) URL.revokeObjectURL(imageSrc);
         setImageSrc(event.target.result);
       };
       reader.readAsDataURL(file);
@@ -79,6 +93,7 @@ function DeteksiPenyakitContent() {
 
     const reader = new FileReader();
     reader.onload = event => {
+      if (imageSrc) URL.revokeObjectURL(imageSrc);
       setImageSrc(event.target.result);
     };
     reader.readAsDataURL(file);
@@ -89,37 +104,26 @@ function DeteksiPenyakitContent() {
   const uploadImage = async (file) => {
     if (ongoingRequest.current) return;
     ongoingRequest.current = true;
-
     setLoading(true);
     setError(null);
     setResult(null);
 
     const formData = new FormData();
     formData.append('file', file);
+
     try {
       const response = await fetch('https://backendpetani-h5hwb3dzaydhcbgr.eastasia-01.azurewebsites.net/deteksi/predict', {
         method: 'POST',
         body: formData,
       });
 
-      const text = await response.text();
-      if (!response.ok) {
-        let errMsg = 'Gagal deteksi penyakit';
-        try {
-          const errJson = JSON.parse(text);
-          errMsg = errJson.message || errMsg;
-        } catch {
-          errMsg = text || errMsg;
-        }
-        throw new Error(errMsg);
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Gagal deteksi penyakit');
       }
 
-      const data = JSON.parse(text);
-      if (data.success) {
-        setResult(data);
-      } else {
-        throw new Error(data.message || 'Gagal mendeteksi penyakit');
-      }
+      setResult(data);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -148,7 +152,7 @@ function DeteksiPenyakitContent() {
   };
 
   const startRealtimeDetection = () => {
-    if (!videoRef.current || !videoRef.current.srcObject) {
+    if (!videoRef.current?.srcObject) {
       setError('Kamera belum aktif');
       return;
     }
@@ -160,17 +164,20 @@ function DeteksiPenyakitContent() {
       captureFrameRealtime();
     }, 1500);
   };
+
   const stopRealtimeDetection = () => {
     setIsRealtime(false);
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
+    stopCamera(); // tambahkan stop kamera
     setImageSrc(null);
     setResult(null);
     setLoading(false);
     ongoingRequest.current = false;
   };
+
   useEffect(() => {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
@@ -178,6 +185,7 @@ function DeteksiPenyakitContent() {
       if (imageSrc) URL.revokeObjectURL(imageSrc);
     };
   }, []);
+
   return (
     <>
       <h4 className="mb-3">Deteksi Penyakit Daun Cabai</h4>
@@ -201,7 +209,9 @@ function DeteksiPenyakitContent() {
             <Stop className="me-1" /> Stop Realtime
           </Button>
         )}
+        <Button variant="secondary" onClick={resetAll}>Reset</Button>
       </div>
+
       {error && <Alert variant="danger">{error}</Alert>}
       {loading && (
         <Alert variant="info">
@@ -209,6 +219,7 @@ function DeteksiPenyakitContent() {
           Memproses gambar...
         </Alert>
       )}
+
       <video
         ref={videoRef}
         style={{ width: '100%', maxHeight: '350px', borderRadius: '12px', marginBottom: '1rem', border: '1px solid #ccc' }}
@@ -216,6 +227,7 @@ function DeteksiPenyakitContent() {
         muted
         playsInline
       />
+
       <Row>
         {imageSrc && (
           <Col md={6}>
@@ -237,11 +249,10 @@ function DeteksiPenyakitContent() {
                 <div>
                   {result.data.confidences.map(({ label, confidence }) => {
                     const percent = confidence * 100;
-                    // Tentukan warna progress bar berdasarkan confidence
                     let variant = 'danger';
                     if (percent > 75) variant = 'success';
                     else if (percent > 40) variant = 'warning';
-                    
+
                     return (
                       <div key={label} style={{ marginBottom: '1rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '600', marginBottom: '0.25rem', color: '#34495e' }}>
@@ -263,6 +274,7 @@ function DeteksiPenyakitContent() {
           </Col>
         )}
       </Row>
+
       <canvas ref={canvasRef} style={{ display: 'none' }} />
     </>
   );
