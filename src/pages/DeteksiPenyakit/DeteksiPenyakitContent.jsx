@@ -160,7 +160,6 @@ function DeteksiPenyakitContent() {
       captureFrameRealtime();
     }, 1500);
   };
-
   const stopRealtimeDetection = () => {
     setIsRealtime(false);
     if (intervalRef.current) {
@@ -172,7 +171,6 @@ function DeteksiPenyakitContent() {
     setLoading(false);
     ongoingRequest.current = false;
   };
-
   useEffect(() => {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
@@ -180,7 +178,6 @@ function DeteksiPenyakitContent() {
       if (imageSrc) URL.revokeObjectURL(imageSrc);
     };
   }, []);
-
   return (
     <>
       <h4 className="mb-3">Deteksi Penyakit Daun Cabai</h4>
@@ -205,7 +202,6 @@ function DeteksiPenyakitContent() {
           </Button>
         )}
       </div>
-
       {error && <Alert variant="danger">{error}</Alert>}
       {loading && (
         <Alert variant="info">
@@ -213,7 +209,6 @@ function DeteksiPenyakitContent() {
           Memproses gambar...
         </Alert>
       )}
-
       <video
         ref={videoRef}
         style={{ width: '100%', maxHeight: '350px', borderRadius: '12px', marginBottom: '1rem', border: '1px solid #ccc' }}
@@ -221,7 +216,6 @@ function DeteksiPenyakitContent() {
         muted
         playsInline
       />
-
       <Row>
         {imageSrc && (
           <Col md={6}>
@@ -238,20 +232,23 @@ function DeteksiPenyakitContent() {
               <Card.Body>
                 <Card.Text>
                   <strong>Label:</strong> {result.data.label} <br />
-                  <strong>Confidence:</strong>
-                  <ProgressBar
-                    now={result.data.confidence * 100}
-                    label={`${(result.data.confidence * 100).toFixed(2)}%`}
-                    className="mt-2"
-                    style={{ height: '1.5rem' }}
-                  />
+                  <strong>Confidence Levels:</strong>
+                  {result.data.confidences.map(({ label, confidence }) => (
+                    <div key={label} style={{ marginBottom: '0.5rem' }}>
+                      <div>{label}: {(confidence * 100).toFixed(2)}%</div>
+                      <ProgressBar
+                        now={confidence * 100}
+                        label={`${(confidence * 100).toFixed(2)}%`}
+                        style={{ height: '1.5rem' }}
+                      />
+                    </div>
+                  ))}
                 </Card.Text>
               </Card.Body>
             </Card>
           </Col>
         )}
       </Row>
-
       <canvas ref={canvasRef} style={{ display: 'none' }} />
     </>
   );
