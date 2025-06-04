@@ -18,8 +18,6 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
   const [weatherRecommendation, setWeatherRecommendation] = useState('');
   const [fetchingRecommendation, setFetchingRecommendation] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  const [image, setImage] = useState(null);
-  const [detectionResult, setDetectionResult] = useState('');
 
   useEffect(() => {
     if (!window.SpeechSDK) {
@@ -47,7 +45,6 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
         console.error('Error saat fetch harga cabai:', error);
       }
     };
-
     fetchHargaCabai();
 
     const fetchPrediksiHarga = async () => {
@@ -73,35 +70,6 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
     if (value < 2.5) return 'Hujan ringan';
     if (value < 7.6) return 'Hujan sedang';
     return 'Hujan lebat';
-  };
-  const handleImageUpload = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      setImage(URL.createObjectURL(file));
-      detectDisease(file);
-    }
-  };
-  const detectDisease = async (file) => {
-    const formData = new FormData();
-    formData.append('image', file);
-    try {
-      const response = await fetch('https://backendpetani-h5hwb3dzaydhcbgr.eastasia-01.azurewebsites.net/deteksi/', {
-        method: 'POST',
-        body: formData,
-      });
-      if (!response.ok) throw new Error('Gagal mendeteksi penyakit.');
-      const data = await response.json();
-      if (data.success) {
-        setDetectionResult(data.data);
-      } else {
-        setDetectionResult(null);
-        setErrorMsg(data.message);
-      }
-    } catch (error) {
-      console.error('Error saat deteksi penyakit:', error);
-      setDetectionResult(null);
-      setErrorMsg('Gagal mendeteksi penyakit. Silakan coba lagi.');
-    }
   };
 
   const sendCuacaToBackend = async (cuacaData) => {
@@ -298,40 +266,7 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
       </p>
     </div>
   </div>
-<Row className="mb-5">
-        <Col xs={12}>
-          <Card className="border-0" style={{ borderRadius: '14px', boxShadow: '0 6px 15px rgba(0,0,0,0.08)' }}>
-            <Card.Body>
-              <h2 className="mb-4" style={{ color: '#1B5E20', fontWeight: '600', fontSize: '1.5rem' }}>
-                Deteksi Penyakit Daun Cabai
-              </h2>
-              <input type="file" accept="image/*" onChange={handleImageUpload} />
-              {image && <img src={image} alt="Uploaded" style={{ width: '100%', maxHeight: '300px', objectFit: 'cover', marginTop: '10px' }} />}
-              
-              {detectionResult && (
-                <div className="mt-4">
-                  <h5>Hasil Deteksi:</h5>
-                  <p><strong>Label:</strong> {detectionResult.label}</p>
-                  <h6>Confidence Levels:</h6>
-                  <ul>
-                    {detectionResult.confidences.map((item, index) => (
-                      <li key={index}>
-                        {item.label}: {Math.round(item.confidence * 100)}%
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
 
-              {errorMsg && (
-                <Alert variant="danger" className="mt-4">
-                  {errorMsg}
-                </Alert>
-              )}
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
   {/* Kartu Info - Dipercantik */}
   <Row className="g-4 mb-5">
     {cards.map((card, idx) => (
