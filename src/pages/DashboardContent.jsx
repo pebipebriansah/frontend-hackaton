@@ -18,14 +18,8 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
   const [weatherRecommendation, setWeatherRecommendation] = useState('');
   const [fetchingRecommendation, setFetchingRecommendation] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-
-  const [showCameraModal, setShowCameraModal] = useState(false);
-  const [imagePreview, setImagePreview] = useState(null);
-  const [detectionResult, setDetectionResult] = useState(null);
-  const [isDetecting, setIsDetecting] = useState(false);
-  const [cameraError, setCameraError] = useState('');
-  const videoRef = useRef(null);
-  const fileInputRef = useRef(null);
+  const [image, setImage] = useState(null);
+  const [detectionResult, setDetectionResult] = useState('');
 
   useEffect(() => {
     if (!window.SpeechSDK) {
@@ -53,6 +47,7 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
         console.error('Error saat fetch harga cabai:', error);
       }
     };
+
     fetchHargaCabai();
 
     const fetchPrediksiHarga = async () => {
@@ -78,6 +73,35 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
     if (value < 2.5) return 'Hujan ringan';
     if (value < 7.6) return 'Hujan sedang';
     return 'Hujan lebat';
+  };
+  const handleImageUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      setImage(URL.createObjectURL(file));
+      detectDisease(file);
+    }
+  };
+  const detectDisease = async (file) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    try {
+      const response = await fetch('https://backendpetani-h5hwb3dzaydhcbgr.eastasia-01.azurewebsites.net/deteksi/', {
+        method: 'POST',
+        body: formData,
+      });
+      if (!response.ok) throw new Error('Gagal mendeteksi penyakit.');
+      const data = await response.json();
+      if (data.success) {
+        setDetectionResult(data.data);
+      } else {
+        setDetectionResult(null);
+        setErrorMsg(data.message);
+      }
+    } catch (error) {
+      console.error('Error saat deteksi penyakit:', error);
+      setDetectionResult(null);
+      setErrorMsg('Gagal mendeteksi penyakit. Silakan coba lagi.');
+    }
   };
 
   const sendCuacaToBackend = async (cuacaData) => {
@@ -109,98 +133,6 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
       setFetchingRecommendation(false);
     }
   };
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const startCamera = async () => {
-    setCameraError('');
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
-    } catch (err) {
-      console.error('Camera error:', err);
-      setCameraError('Tidak dapat mengakses kamera. Pastikan Anda memberikan izin.');
-    }
-  };
-
-  const stopCamera = () => {
-    if (videoRef.current && videoRef.current.srcObject) {
-      videoRef.current.srcObject.getTracks().forEach(track => track.stop());
-    }
-  };
-
-  const captureImage = () => {
-    if (videoRef.current) {
-      const canvas = document.createElement('canvas');
-      canvas.width = videoRef.current.videoWidth;
-      canvas.height = videoRef.current.videoHeight;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-      setImagePreview(canvas.toDataURL('image/jpeg'));
-    }
-  };
-
-  const detectDisease = async () => {
-    if (!imagePreview) {
-      setErrorMsg('Silakan ambil atau unggah gambar terlebih dahulu');
-      return;
-    }
-
-    setIsDetecting(true);
-    setDetectionResult(null);
-    setErrorMsg('');
-
-    try {
-      // Convert base64 to blob
-      const blob = await fetch(imagePreview).then(res => res.blob());
-      const formData = new FormData();
-      formData.append('image', blob, 'chili-image.jpg');
-      formData.append('id_petani', idPetani);
-
-      const response = await fetch(
-        'https://backendpetani-h5hwb3dzaydhcbgr.eastasia-01.azurewebsites.net/deteksi/predict',
-        {
-          method: 'POST',
-          body: formData,
-        }
-      );
-
-      if (!response.ok) throw new Error('Gagal melakukan deteksi penyakit');
-
-      const data = await response.json();
-      setDetectionResult(data);
-    } catch (error) {
-      console.error('Detection error:', error);
-      setErrorMsg('Gagal melakukan deteksi. Silakan coba lagi.');
-      
-      // Fallback mock data for demo purposes
-      setDetectionResult({
-        penyakit: "Antraknosa",
-        akurasi: "85%",
-        deskripsi: "Penyakit antraknosa disebabkan oleh jamur Colletotrichum spp. yang menyerang buah cabai.",
-        solusi: "1. Buang bagian tanaman yang terinfeksi\n2. Gunakan fungisida yang mengandung bahan aktif azoxystrobin\n3. Tingkatkan sirkulasi udara di sekitar tanaman\n4. Hindari penyiraman dari atas tanaman"
-      });
-    } finally {
-      setIsDetecting(false);
-    }
-  };
-
-  const resetDetection = () => {
-    setImagePreview(null);
-    setDetectionResult(null);
-    setErrorMsg('');
-  };
-
 
   useEffect(() => {
     if (loading || curahHujan == null || !lokasi) return;
@@ -366,7 +298,40 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
       </p>
     </div>
   </div>
+<Row className="mb-5">
+        <Col xs={12}>
+          <Card className="border-0" style={{ borderRadius: '14px', boxShadow: '0 6px 15px rgba(0,0,0,0.08)' }}>
+            <Card.Body>
+              <h2 className="mb-4" style={{ color: '#1B5E20', fontWeight: '600', fontSize: '1.5rem' }}>
+                Deteksi Penyakit Daun Cabai
+              </h2>
+              <input type="file" accept="image/*" onChange={handleImageUpload} />
+              {image && <img src={image} alt="Uploaded" style={{ width: '100%', maxHeight: '300px', objectFit: 'cover', marginTop: '10px' }} />}
+              
+              {detectionResult && (
+                <div className="mt-4">
+                  <h5>Hasil Deteksi:</h5>
+                  <p><strong>Label:</strong> {detectionResult.label}</p>
+                  <h6>Confidence Levels:</h6>
+                  <ul>
+                    {detectionResult.confidences.map((item, index) => (
+                      <li key={index}>
+                        {item.label}: {Math.round(item.confidence * 100)}%
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
+              {errorMsg && (
+                <Alert variant="danger" className="mt-4">
+                  {errorMsg}
+                </Alert>
+              )}
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
   {/* Kartu Info - Dipercantik */}
   <Row className="g-4 mb-5">
     {cards.map((card, idx) => (
@@ -451,164 +416,6 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
     ))}
   </Row>
 
-<Card className="mb-5 border-0" style={{
-        borderRadius: '14px',
-        boxShadow: '0 6px 15px rgba(0,0,0,0.08)',
-        overflow: 'hidden'
-      }}>
-        <Card.Body className="p-0">
-          <div className="p-4" style={{ 
-            backgroundColor: '#FFF3E0',
-            borderBottom: '1px solid rgba(0,0,0,0.05)'
-          }}>
-            <h2 className="mb-0 d-flex align-items-center" style={{ 
-              color: '#E65100',
-              fontWeight: '600',
-              fontSize: '1.5rem'
-            }}>
-              <Camera className="me-3" size={28} style={{ 
-                backgroundColor: '#FF9800',
-                color: 'white',
-                padding: '6px',
-                borderRadius: '50%'
-              }} />
-              Deteksi Penyakit Cabai
-            </h2>
-          </div>
-          
-          <div className="p-4">
-            {!imagePreview ? (
-              <div className="text-center">
-                <div className="d-flex justify-content-center gap-3 mb-4">
-                  <Button 
-                    variant="warning" 
-                    className="rounded-pill px-4 py-3 d-flex align-items-center"
-                    onClick={() => setShowCameraModal(true)}
-                    style={{ fontWeight: '600' }}
-                  >
-                    <Camera size={18} className="me-2" />
-                    Ambil Foto
-                  </Button>
-                  <span className="align-self-center">atau</span>
-                  <Button 
-                    variant="outline-secondary" 
-                    className="rounded-pill px-4 py-3 d-flex align-items-center"
-                    onClick={() => fileInputRef.current.click()}
-                    style={{ fontWeight: '600' }}
-                  >
-                    <Image size={18} className="me-2" />
-                    Unggah Gambar
-                  </Button>
-                  <input 
-                    type="file" 
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                    accept="image/*"
-                    style={{ display: 'none' }}
-                  />
-                </div>
-                <p className="text-muted">
-                  Ambil foto daun atau buah cabai yang diduga terkena penyakit untuk mendapatkan diagnosis
-                </p>
-              </div>
-            ) : (
-              <div>
-                <div className="text-center mb-4">
-                  <div className="position-relative d-inline-block">
-                    <img 
-                      src={imagePreview} 
-                      alt="Preview" 
-                      style={{ 
-                        maxWidth: '100%', 
-                        maxHeight: '300px', 
-                        borderRadius: '10px',
-                        border: '2px solid #FF9800'
-                      }} 
-                    />
-                    <Button 
-                      variant="danger" 
-                      size="sm" 
-                      className="position-absolute top-0 end-0 m-2 rounded-circle"
-                      onClick={resetDetection}
-                      style={{ width: '30px', height: '30px' }}
-                    >
-                      ×
-                    </Button>
-                  </div>
-                </div>
-                
-                <div className="text-center">
-                  <Button 
-                    variant="warning" 
-                    className="rounded-pill px-5 py-3 mb-3"
-                    onClick={detectDisease}
-                    disabled={isDetecting}
-                    style={{ fontWeight: '600' }}
-                  >
-                    {isDetecting ? (
-                      <>
-                        <Spinner animation="border" size="sm" className="me-2" />
-                        Menganalisis...
-                      </>
-                    ) : (
-                      <>
-                        Deteksi Penyakit
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {isDetecting && (
-              <div className="text-center py-4">
-                <Spinner animation="border" variant="warning" className="me-2" />
-                <span style={{ color: '#FF9800', fontWeight: '500' }}>
-                  Menganalisis gambar...
-                </span>
-              </div>
-            )}
-
-            {detectionResult && (
-              <div className="mt-4 p-4 rounded" style={{ 
-                backgroundColor: '#FFF8E1',
-                borderLeft: '4px solid #FF9800'
-              }}>
-                <h5 className="mb-3" style={{ color: '#E65100' }}>
-                  Hasil Deteksi
-                </h5>
-                <div className="mb-3">
-                  <strong>Penyakit: </strong>
-                  <span className="badge bg-warning text-dark">
-                    {detectionResult.penyakit}
-                  </span>
-                  {detectionResult.akurasi && (
-                    <span className="ms-2 badge bg-light text-dark">
-                      Akurasi: {detectionResult.akurasi}
-                    </span>
-                  )}
-                </div>
-                <div className="mb-3">
-                  <strong>Deskripsi: </strong>
-                  <p>{detectionResult.deskripsi}</p>
-                </div>
-                <div>
-                  <strong>Solusi: </strong>
-                  <ReactMarkdown rehypePlugins={[rehypeRaw]}>
-                    {detectionResult.solusi}
-                  </ReactMarkdown>
-                </div>
-              </div>
-            )}
-
-            {errorMsg && (
-              <Alert variant="danger" className="mt-3">
-                {errorMsg}
-              </Alert>
-            )}
-          </div>
-        </Card.Body>
-      </Card>
   {/* Rekomendasi Cuaca - Dipercantik */}
   <Card className="mb-5 border-0" style={{
     borderRadius: '14px',
@@ -784,79 +591,6 @@ function DashboardContent({ lokasi, curahHujan, loading }) {
       </div>
     </Card.Body>
   </Card>
-  {/* Camera Modal */}
-      <Modal show={showCameraModal} onHide={() => {
-        setShowCameraModal(false);
-        stopCamera();
-      }} size="lg" centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Ambil Foto</Modal.Title>
-        </Modal.Header>
-        <Modal.Body className="text-center">
-          {cameraError ? (
-            <Alert variant="danger">{cameraError}</Alert>
-          ) : (
-            <div style={{ position: 'relative' }}>
-              <video 
-                ref={videoRef} 
-                autoPlay 
-                playsInline 
-                style={{ 
-                  width: '100%', 
-                  backgroundColor: '#f0f0f0',
-                  borderRadius: '8px'
-                }}
-              />
-              {imagePreview && (
-                <img 
-                  src={imagePreview} 
-                  alt="Captured" 
-                  style={{ 
-                    position: 'absolute', 
-                    top: '10px', 
-                    right: '10px', 
-                    width: '120px', 
-                    border: '2px solid white',
-                    borderRadius: '4px'
-                  }} 
-                />
-              )}
-            </div>
-          )}
-        </Modal.Body>
-        <Modal.Footer className="justify-content-center">
-          {!imagePreview ? (
-            <Button 
-              variant="primary" 
-              onClick={captureImage}
-              disabled={cameraError}
-            >
-              Ambil Foto
-            </Button>
-          ) : (
-            <>
-              <Button 
-                variant="secondary" 
-                onClick={() => {
-                  setImagePreview(null);
-                  startCamera();
-                }}
-              >
-                Ambil Ulang
-              </Button>
-              <Button 
-                variant="success" 
-                onClick={() => {
-                  setShowCameraModal(false);
-                  stopCamera();
-                }}
-              >
-                Gunakan Foto Ini
-              </Button>
-            </>
-          )}
-        </Modal.Footer>
-      </Modal>
 </Container>
   );
 }
