@@ -230,20 +230,34 @@ function DeteksiPenyakitContent() {
             <Card className="mb-3 shadow-sm">
               <Card.Header>Hasil Deteksi</Card.Header>
               <Card.Body>
-                <Card.Text>
-                  <strong>Label:</strong> {result.data.label} <br />
-                  <strong>Confidence Levels:</strong>
-                  {result.data.confidences.map(({ label, confidence }) => (
-                    <div key={label} style={{ marginBottom: '0.5rem' }}>
-                      <div>{label}: {(confidence * 100).toFixed(2)}%</div>
-                      <ProgressBar
-                        now={confidence * 100}
-                        label={`${(confidence * 100).toFixed(2)}%`}
-                        style={{ height: '1.5rem' }}
-                      />
-                    </div>
-                  ))}
+                <Card.Text style={{ fontSize: '1.1rem', fontWeight: '600', marginBottom: '1rem' }}>
+                  <span>Label Prediksi: </span>
+                  <span style={{ color: '#2c3e50' }}>{result.data.label}</span>
                 </Card.Text>
+                <div>
+                  {result.data.confidences.map(({ label, confidence }) => {
+                    const percent = confidence * 100;
+                    // Tentukan warna progress bar berdasarkan confidence
+                    let variant = 'danger';
+                    if (percent > 75) variant = 'success';
+                    else if (percent > 40) variant = 'warning';
+                    
+                    return (
+                      <div key={label} style={{ marginBottom: '1rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '600', marginBottom: '0.25rem', color: '#34495e' }}>
+                          <span>{label}</span>
+                          <span>{percent.toFixed(2)}%</span>
+                        </div>
+                        <ProgressBar
+                          now={percent}
+                          variant={variant}
+                          style={{ height: '1.5rem', borderRadius: '0.5rem' }}
+                          animated={percent > 0}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
               </Card.Body>
             </Card>
           </Col>
