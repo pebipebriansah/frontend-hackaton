@@ -1,6 +1,8 @@
 import { useRef, useState, useEffect } from 'react';
 import { Card, Alert, Button, Row, Col, Spinner } from 'react-bootstrap';
 import { CameraVideo, Camera, Upload, Play, Stop } from 'react-bootstrap-icons';
+import { ProgressBar } from 'react-bootstrap';
+
 
 function DeteksiPenyakitContent() {
   const videoRef = useRef(null);
