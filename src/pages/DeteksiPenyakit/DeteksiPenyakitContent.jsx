@@ -1,4 +1,5 @@
-import { Row, Col } from 'react-bootstrap';
+import React from 'react';
+import { Alert, Spinner, Row, Col } from 'react-bootstrap';
 import KameraControls from '@/components/DeteksiPenyakit/KameraControls';
 import KameraVideo from '@/components/DeteksiPenyakit/KameraVideo';
 import PreviewGambar from '@/components/DeteksiPenyakit/PreviewGambar';
@@ -10,16 +11,18 @@ function DeteksiPenyakitContent() {
     videoRef,
     canvasRef,
     imageSrc,
-    result,
+    imageFile,
     error,
     loading,
+    result,
     isRealtime,
     startCamera,
-    stopRealtimeDetection,
+    resetAll,
     capturePhoto,
     handleFileChange,
-    resetAll,
     startRealtimeDetection,
+    stopRealtimeDetection,
+    isCameraOn
   } = useDeteksiPenyakit();
 
   return (
@@ -27,28 +30,37 @@ function DeteksiPenyakitContent() {
       <h4 className="mb-3">Deteksi Penyakit Daun Cabai</h4>
 
       <KameraControls
+        imageFile={imageFile}
+        isRealtime={isRealtime}
         startCamera={startCamera}
         capturePhoto={capturePhoto}
         handleFileChange={handleFileChange}
         startRealtimeDetection={startRealtimeDetection}
         stopRealtimeDetection={stopRealtimeDetection}
         resetAll={resetAll}
-        isRealtime={isRealtime}
-        videoRef={videoRef}
-        imageSrc={imageSrc}
+        isCameraOn={isCameraOn}
       />
+
+      {error && <Alert variant="danger">{error}</Alert>}
+      {loading && (
+        <Alert variant="info">
+          <Spinner animation="border" size="sm" className="me-2" />
+          Memproses gambar...
+        </Alert>
+      )}
 
       <KameraVideo videoRef={videoRef} />
 
-      {error && <div className="alert alert-danger">{error}</div>}
-      {loading && <div className="alert alert-info">Memproses gambar...</div>}
-
       <Row>
         {imageSrc && (
-          <Col md={6}><PreviewGambar src={imageSrc} /></Col>
+          <Col md={6}>
+            <PreviewGambar imageSrc={imageSrc} />
+          </Col>
         )}
-        {result?.data && (
-          <Col md={6}><HasilDeteksi result={result} /></Col>
+        {result && (
+          <Col md={6}>
+            <HasilDeteksi result={result} />
+          </Col>
         )}
       </Row>
 

@@ -1,16 +1,16 @@
 import { Container, Row, Col, Alert } from 'react-bootstrap';
 import { useEffect, useState } from 'react';
 
-import useSpeechRecognition from './hooks/useSpeechRecognition';
-import fetchHargaCabai from './utils/fetchHargaCabai';
-import fetchPrediksiHarga from './utils/fetchPrediksiHarga';
-import sendCuacaToBackend from './utils/sendCuacaToBackend';
-import fetchSpeechRecommendation from './utils/fetchSpeechRecommendation';
+import useSpeechRecognition from '@/hooks/useSpeechRecognition';
+import fetchHargaCabai from '@/api/fetchHargaCabai';
+import fetchPrediksiHarga from '@/api/fetchPrediksiHarga';
+import sendCuacaToBackend from '@/api/sendCuacaToBackend';
+import fetchSpeechRecommendation from '@/api/fetchSpeechRecommendation';
 
-import HargaCabaiCard from './components/cards/HargaCabaiCard';
-import PrediksiHargaCard from './components/cards/PrediksiHargaCard';
-import RekomendasiCuacaCard from './components/cards/RekomendasiCuacaCard';
-import RekomendasiSuaraCard from './components/cards/RekomendasiSuaraCard';
+import HargaCabaiCard from '@/components/cards/HargaCabaiCard';
+import PrediksiHargaCard from '@/components/cards/PrediksiHargaCard';
+import RekomendasiCuacaCard from '@/components/cards/RekomendasiCuacaCard';
+import RekomendasiSuaraCard from '@/components/cards/RekomendasiSuaraCard';
 
 function DashboardContent({ lokasi, curahHujan, loading }) {
   const idPetani = localStorage.getItem('id_petani');

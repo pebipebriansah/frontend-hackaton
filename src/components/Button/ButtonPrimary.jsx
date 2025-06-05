@@ -1,6 +1,6 @@
 // src/components/Button/ButtonPrimary.jsx
 import React from 'react';
-import styles from './ButtonPrimary.module.css';
+import styles from '@/style/ButtonPrimary.module.css';
 
 export default function ButtonPrimary({ children, onClick, type = 'button', loading = false, disabled = false }) {
   return (

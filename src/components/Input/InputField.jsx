@@ -1,6 +1,6 @@
 // src/components/Input/InputField.jsx
 import React from 'react';
-import styles from './InputField.module.css';
+import styles from '@/style/InputField.module.css';
 
 export default function InputField({
   type = 'text',
