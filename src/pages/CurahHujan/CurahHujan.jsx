@@ -1,4 +1,4 @@
-import Layout from '@/Layout';
+import Layout from '../Layout';
 import CurahHujanContent from './CurahHujanContent';
 
 function CurahHujan() {
