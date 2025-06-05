@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
-import { API_BASE_URL } from '../api/apiConfig';
+import { API_BASE_URL } from '@/api/apiConfig';
 function useDeteksiPenyakit() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);

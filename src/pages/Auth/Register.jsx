@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import InputField from '../../components/Input/InputField';
-import ButtonPrimary from '../../components/Button/ButtonPrimary';
-import { registerUser } from '../../api/auth'; // ⬅️ Import API
+import InputField from '@/components/Input/InputField';
+import ButtonPrimary from '@/components/Button/ButtonPrimary';
+import { registerUser } from '@/api/auth'; // ⬅️ Import API
 
 export default function Register() {
   const [namaPetani, setNamaPetani] = useState('');

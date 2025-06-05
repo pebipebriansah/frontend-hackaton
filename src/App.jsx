@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import LoginForm from './pages/Auth/Login';
-import Layout from './pages/Layout'; // halaman dashboard
-import bgImage from './assets/petani.jpg';
+import LoginForm from '@/pages/Auth/Login';
+import Layout from '@/pages/Layout'; // halaman dashboard
+import bgImage from '@/assets/petani.jpg';
 
 export default function App() {
   const [showLogin, setShowLogin] = useState(false);

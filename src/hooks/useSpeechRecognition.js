@@ -1,6 +1,6 @@
 // hooks/useSpeechRecognition.js
 import { useEffect, useState } from 'react';
-import { azureConfig } from '../api/apiConfig'; // Pastikan path ini sesuai
+import { azureConfig } from '@/api/apiConfig'; // Pastikan path ini sesuai
 
 const useSpeechRecognition = ({ onResult, onError }) => {
   const [listening, setListening] = useState(false);
