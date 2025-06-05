@@ -1,5 +1,5 @@
 import React from 'react';
-import DashboardContent from '../components/DashboardContent';
+import DashboardContent from './DashboardContent';
 
 function Dashboard({ lokasi, curahHujan, loadingCuaca }) {
   return (

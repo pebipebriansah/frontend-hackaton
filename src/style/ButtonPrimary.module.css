@@ -1,0 +1,21 @@
+.button {
+  width: 100%;
+  padding: 12px;
+  color: white;
+  border: none;
+  border-radius: 50px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-bottom: 1rem;
+}
+
+.active {
+  background-color: #388e3c;
+}
+
+.loading {
+  background-color: #a5d6a7;
+  cursor: not-allowed;
+}

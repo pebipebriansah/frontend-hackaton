@@ -5,10 +5,10 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import './index.css'
 
 import App from './App.jsx'           // Halaman utama
-import LoginForm from './Login.jsx'   // Halaman login
-import RegisterForm from './Register.jsx' //e Halaman register
-import Dashboard from './pages/Dashboard.jsx'
-import PriceRange from './pages/PriceRange.jsx'
+import LoginForm from './pages/Auth/Login.jsx'   // Halaman login
+import RegisterForm from './pages/Auth/Register.jsx' //e Halaman register
+import Dashboard from './pages/Dashboard/Dashboard.jsx'
+import PriceRange from './pages/PriceRange/PriceRange.jsx'
 import Layout from './pages/Layout.jsx'
 import CurahHujan from './pages/CurahHujan/CurahHujan.jsx'
 import DeteksiPenyakit from './pages/DeteksiPenyakit/DeteksiPenyakit.jsx'

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import LoginForm from './Login';
+import LoginForm from './pages/Auth/Login';
 import Layout from './pages/Layout'; // halaman dashboard
 import bgImage from './assets/petani.jpg';
 
