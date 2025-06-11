@@ -8,6 +8,7 @@ import fetchSpeechRecommendation from '../../api/fetchSpeechRecommendation';
 
 import HargaCabaiCard from '../../components/Cards/HargaCabaiCard';
 import PrediksiHargaCard from '../../components/Cards/PrediksiHargaCard';
+import InputKeluhan from '../../components/Input/InputKeluhan';
 import RekomendasiSuaraCard from '../../components/Cards/RekomendasiSuaraCard';
 
 function DashboardContent() {
@@ -20,22 +21,23 @@ function DashboardContent() {
   const [fetchingRecommendation, setFetchingRecommendation] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  const {
-    listening,
-    recognizedText,
-    startListening,
-  } = useSpeechRecognition({
-    onResult: async (text) => {
-      setRecommendation('');
-      await fetchSpeechRecommendation(text, setRecommendation, setErrorMsg, setFetchingRecommendation);
-    },
-    onError: (msg) => setErrorMsg(msg)
-  });
-
   useEffect(() => {
     fetchHargaCabai(setHargaBulanIni, setHargaBulanLalu, setErrorMsg);
     fetchPrediksiHarga(setHargaPrediksi, setMeanSquaredError, setErrorMsg);
   }, []);
+
+  async function handleKirimKeluhan(keluhan) {
+    setErrorMsg('');
+    setRecommendation('');
+    setFetchingRecommendation(true);
+
+    try {
+      await fetchSpeechRecommendation(keluhan, setRecommendation, setErrorMsg, setFetchingRecommendation);
+    } catch (error) {
+      setErrorMsg('Gagal memproses rekomendasi.',error);
+      setFetchingRecommendation(false);
+    }
+  }
 
   return (
     <Container className="py-4" style={{ maxWidth: '1200px' }}>
@@ -48,13 +50,8 @@ function DashboardContent() {
         </Col>
 
         <Col md={6}>
-          <RekomendasiSuaraCard
-            loading={fetchingRecommendation}
-            recommendation={recommendation}
-            listening={listening}
-            recognizedText={recognizedText}
-            onStartListening={startListening}
-          />
+          <InputKeluhan onKirimKeluhan={handleKirimKeluhan} />
+          <RekomendasiSuaraCard loading={fetchingRecommendation} recommendation={recommendation} />
         </Col>
       </Row>
     </Container>
