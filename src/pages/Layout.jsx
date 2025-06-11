@@ -279,15 +279,6 @@ function Layout({ children }) {
             </Nav.Link>
             <Nav.Link
               as={Link}
-              to="/price-range"
-              onClick={toggleSidebar}
-              style={{ padding: '12px 16px', borderRadius: 8 }}
-              className="text-success fw-semibold"
-            >
-              💰 Harga
-            </Nav.Link>
-            <Nav.Link
-              as={Link}
               to="/deteksi-penyakit"
               onClick={toggleSidebar}
               style={{ padding: '12px 16px', borderRadius: 8 }}
