@@ -1,7 +1,7 @@
 import { API_BASE_URL } from "./apiConfig";
 
 export async function loginUser(email, password) {
-  const res = await fetch(`${API_BASE_URL}/auth/login`, {
+  const res = await fetch(`${API_BASE_URL}/petani/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
