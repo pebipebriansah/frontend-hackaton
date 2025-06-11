@@ -1,69 +1,107 @@
+import { useState } from 'react';
+import { Button, Modal, Form } from 'react-bootstrap';
 import { Mic } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
-import rehypeRaw from 'rehype-raw';
-import { Button } from 'react-bootstrap';
-import BaseCard from './BaseCard';
 
-export default function RekomendasiSuaraCard({
-  loading,
-  recommendation,
-  listening,
-  recognizedText,
-  onStartListening,
-}) {
+export default function InputKeluhanButtons({ onKirimKeluhan }) {
+  const [showModalSuara, setShowModalSuara] = useState(false);
+  const [showModalTeks, setShowModalTeks] = useState(false);
+
+  // State untuk suara
+  const [listening, setListening] = useState(false);
+  const [recognizedText, setRecognizedText] = useState('');
+
+  // State untuk teks
+  const [keluhanTeks, setKeluhanTeks] = useState('');
+
+  // Simulasi fungsi rekam suara
+  function startListening() {
+    setListening(true);
+    setRecognizedText('');
+    setTimeout(() => {
+      const hasilSuara = 'Daun cabai saya menguning'; // Contoh
+      setRecognizedText(hasilSuara);
+      setListening(false);
+    }, 3000);
+  }
+
+  function handleKirimSuara() {
+    if (!recognizedText.trim()) return alert('Belum ada teks dari suara.');
+    onKirimKeluhan(recognizedText);
+    setShowModalSuara(false);
+    setRecognizedText('');
+  }
+
+  function handleKirimTeks() {
+    if (!keluhanTeks.trim()) return alert('Keluhan teks kosong.');
+    onKirimKeluhan(keluhanTeks);
+    setShowModalTeks(false);
+    setKeluhanTeks('');
+  }
+
   return (
-    <BaseCard
-      title="Rekomendasi dari Suara"
-      icon={<Mic />}
-      loading={loading}
-      style={{
-        background: 'linear-gradient(135deg, #f0f4f8, #d9e2ec)',
-        border: '1px solid #bcccdc',
-        boxShadow: '0 6px 12px rgba(0,0,0,0.07)',
-        borderRadius: '16px',
-      }}
-    >
-      <Button
-        variant={listening ? 'danger' : 'primary'}
-        onClick={onStartListening}
-        disabled={loading}
-        className="w-100 mb-3 fw-semibold"
-        size="lg"
-      >
-        {listening ? 'Mendengarkan...' : 'Mulai Bicara'}
+    <>
+      <Button variant="primary" onClick={() => setShowModalSuara(true)} className="me-2">
+        <Mic /> Input Suara
+      </Button>
+      <Button variant="secondary" onClick={() => setShowModalTeks(true)}>
+        Ketik Keluhan
       </Button>
 
-      <div className="mb-3">
-        <small className="text-muted">Teks hasil pengenalan suara:</small>
-        <pre
-          style={{
-            backgroundColor: '#eef4f8',
-            padding: '10px',
-            borderRadius: '8px',
-            fontFamily: 'monospace',
-            whiteSpace: 'pre-wrap',
-            minHeight: '60px',
-            color: '#2c3e50',
-            overflowX: 'auto',
-          }}
-        >
-          {recognizedText || '-'}
-        </pre>
-      </div>
+      {/* Modal Input Suara */}
+      <Modal show={showModalSuara} onHide={() => setShowModalSuara(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Input Keluhan dengan Suara</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Button
+            variant={listening ? 'danger' : 'primary'}
+            onClick={startListening}
+            disabled={listening}
+            className="w-100 mb-3"
+          >
+            {listening ? 'Mendengarkan...' : 'Mulai Bicara'}
+          </Button>
+          <div
+            style={{
+              backgroundColor: '#eef4f8',
+              padding: '10px',
+              borderRadius: '8px',
+              fontFamily: 'monospace',
+              minHeight: '60px',
+              color: '#2c3e50',
+              whiteSpace: 'pre-wrap',
+            }}
+          >
+            {recognizedText || '-'}
+          </div>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="success" onClick={handleKirimSuara} disabled={!recognizedText.trim()}>
+            Kirim Keluhan
+          </Button>
+        </Modal.Footer>
+      </Modal>
 
-      <div
-        style={{
-          backgroundColor: '#ffffff',
-          padding: '12px',
-          borderRadius: '12px',
-          boxShadow: '0 2px 6px rgba(0,0,0,0.05)',
-          maxHeight: '200px',
-          overflowY: 'auto',
-          color: '#34495e',
-        }}
-      >
-        <ReactMarkdown rehypePlugins={[rehypeRaw]}>{recommendation || 'Tidak ada rekomendasi saat ini.'}</ReactMarkdown>
-      </div>
-    </BaseCard>
+      {/* Modal Input Teks */}
+      <Modal show={showModalTeks} onHide={() => setShowModalTeks(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Input Keluhan dengan Teks</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form.Control
+            as="textarea"
+            rows={4}
+            placeholder="Ketikan keluhan Anda di sini..."
+            value={keluhanTeks}
+            onChange={e => setKeluhanTeks(e.target.value)}
+          />
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="success" onClick={handleKirimTeks} disabled={!keluhanTeks.trim()}>
+            Kirim Keluhan
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    </>
   );
 }
