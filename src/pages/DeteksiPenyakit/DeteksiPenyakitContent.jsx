@@ -1,10 +1,10 @@
 import React from 'react';
 import { Alert, Spinner, Row, Col } from 'react-bootstrap';
-import KameraControls from '@/components/DeteksiPenyakit/KameraControls';
-import KameraVideo from '@/components/DeteksiPenyakit/KameraVideo';
-import PreviewGambar from '@/components/DeteksiPenyakit/PreviewGambar';
-import HasilDeteksi from '@/components/DeteksiPenyakit/HasilDeteksi';
-import useDeteksiPenyakit from '@/hooks/useDeteksiPenyakit';
+import KameraControls from '../../components/DeteksiPenyakit/KameraControls';
+import KameraVideo from '../../components/DeteksiPenyakit/KameraVideo';
+import PreviewGambar from '../../components/DeteksiPenyakit/PreviewGambar';
+import HasilDeteksi from '../../components/DeteksiPenyakit/HasilDeteksi';
+import useDeteksiPenyakit from '../../hooks/useDeteksiPenyakit';
 
 function DeteksiPenyakitContent() {
   const {

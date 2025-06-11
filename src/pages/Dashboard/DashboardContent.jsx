@@ -1,14 +1,14 @@
 import { Container, Row, Col, Alert } from 'react-bootstrap';
 import { useEffect, useState } from 'react';
 
-import useSpeechRecognition from '@/hooks/useSpeechRecognition';
-import fetchHargaCabai from '@/api/fetchHargaCabai';
-import fetchPrediksiHarga from '@/api/fetchPrediksiHarga';
-import fetchSpeechRecommendation from '@/api/fetchSpeechRecommendation';
+import useSpeechRecognition from '../../hooks/useSpeechRecognition';
+import fetchHargaCabai from '../../api/fetchHargaCabai';
+import fetchPrediksiHarga from '../../api/fetchPrediksiHarga';
+import fetchSpeechRecommendation from '../../api/fetchSpeechRecommendation';
 
-import HargaCabaiCard from '@/components/cards/HargaCabaiCard';
-import PrediksiHargaCard from '@/components/cards/PrediksiHargaCard';
-import RekomendasiSuaraCard from '@/components/cards/RekomendasiSuaraCard';
+import HargaCabaiCard from '../../components/Cards/HargaCabaiCard';
+import PrediksiHargaCard from '../../components/Cards/PrediksiHargaCard';
+import RekomendasiSuaraCard from '../../components/Cards/RekomendasiSuaraCard';
 
 function DashboardContent() {
   const [hargaBulanIni, setHargaBulanIni] = useState(null);
