@@ -27,17 +27,18 @@ function DashboardContent() {
   }, []);
 
   async function handleKirimKeluhan(keluhan) {
-    setErrorMsg('');
-    setRecommendation('');
-    setFetchingRecommendation(true);
+  setErrorMsg('');
+  setRecommendation('');
+  setFetchingRecommendation(true);
 
-    try {
-      await fetchSpeechRecommendation(keluhan, setRecommendation, setErrorMsg, setFetchingRecommendation);
-    } catch (error) {
-      setErrorMsg('Gagal memproses rekomendasi.',error);
-      setFetchingRecommendation(false);
-    }
+  try {
+    await fetchSpeechRecommendation(keluhan, setRecommendation, setErrorMsg, setFetchingRecommendation);
+  } catch (error) {
+    console.error(error);
+    setErrorMsg('Gagal memproses rekomendasi.');
+    setFetchingRecommendation(false);
   }
+}
 
   return (
     <Container className="py-4" style={{ maxWidth: '1200px' }}>
