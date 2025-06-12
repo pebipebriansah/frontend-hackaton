@@ -18,46 +18,47 @@ const useSpeechRecognition = () => {
     }
   }, []);
 
-  const startListening = async () => {
-    setListening(true);
-    setRecognizedText('');
-    setErrorMsg('');
+  const startListening = async (onResult) => {
+  setListening(true);
+  setRecognizedText('');
+  setErrorMsg('');
 
-    try {
-      const SpeechSDK = window.SpeechSDK;
-      if (!SpeechSDK) throw new Error('Azure Speech SDK belum tersedia.');
+  try {
+    const SpeechSDK = window.SpeechSDK;
+    if (!SpeechSDK) throw new Error('Azure Speech SDK belum tersedia.');
 
-      const speechConfig = SpeechSDK.SpeechConfig.fromSubscription(
-        azureConfig.token,
-        azureConfig.region
-      );
-      speechConfig.speechRecognitionLanguage = 'id-ID';
+    const speechConfig = SpeechSDK.SpeechConfig.fromSubscription(
+      azureConfig.token,
+      azureConfig.region
+    );
+    speechConfig.speechRecognitionLanguage = 'id-ID';
 
-      const audioConfig = SpeechSDK.AudioConfig.fromDefaultMicrophoneInput();
-      const recognizer = new SpeechSDK.SpeechRecognizer(speechConfig, audioConfig);
+    const audioConfig = SpeechSDK.AudioConfig.fromDefaultMicrophoneInput();
+    const recognizer = new SpeechSDK.SpeechRecognizer(speechConfig, audioConfig);
 
-      recognizer.recognizeOnceAsync(
-        (result) => {
-          setListening(false);
-          if (result.reason === SpeechSDK.ResultReason.RecognizedSpeech) {
-            setRecognizedText(result.text);
-          } else {
-            setErrorMsg('Tidak dapat mengenali suara. Coba lagi.');
-          }
-          recognizer.close();
-        },
-        (err) => {
-          setListening(false);
-          setErrorMsg(err.errorDetails || 'Terjadi kesalahan saat mengenali suara');
-          recognizer.close();
+    recognizer.recognizeOnceAsync(
+      (result) => {
+        setListening(false);
+        if (result.reason === SpeechSDK.ResultReason.RecognizedSpeech) {
+          setRecognizedText(result.text); // ← local update
+          if (onResult) onResult(result.text); // ← penting: kirim ke luar!
+        } else {
+          setErrorMsg('Tidak dapat mengenali suara. Coba lagi.');
         }
-      );
+        recognizer.close();
+      },
+      (err) => {
+        setListening(false);
+        setErrorMsg(err.errorDetails || 'Terjadi kesalahan saat mengenali suara');
+        recognizer.close();
+      }
+    );
     } catch (err) {
       setListening(false);
-      setErrorMsg('Gagal memulai pengenalan suara. Periksa koneksi dan mikrofon.',err);
+      setErrorMsg('Gagal memulai pengenalan suara. Periksa koneksi dan mikrofon.');
+      console.error(err); // debug
     }
   };
-
   const resetTranscript = () => {
     setRecognizedText('');
     setErrorMsg('');

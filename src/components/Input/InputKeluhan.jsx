@@ -81,7 +81,7 @@ export default function InputKeluhan({ onKirimKeluhan }) {
           <Card.Body>
             <Button
               variant={listening ? 'danger' : 'primary'}
-              onClick={startListening}
+              onClick={() => startListening((text) => setRecognizedText(text))}
               disabled={listening}
               className="w-100 mb-3"
             >
