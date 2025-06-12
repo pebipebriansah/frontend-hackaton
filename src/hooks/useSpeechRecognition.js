@@ -2,18 +2,18 @@
 import { useEffect, useState } from 'react';
 import { azureConfig } from '@/api/apiConfig'; // Pastikan path ini sesuai
 
-const useSpeechRecognition = ({ onResult, onError }) => {
+const useSpeechRecognition = () => {
   const [listening, setListening] = useState(false);
   const [recognizedText, setRecognizedText] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Load Azure Speech SDK if not available
+  // Load Azure Speech SDK
   useEffect(() => {
     if (!window.SpeechSDK) {
       const script = document.createElement('script');
       script.src = 'https://aka.ms/csspeech/jsbrowserpackageraw';
-      script.onload = () => console.log('Speech SDK loaded');
-      script.onerror = () => setErrorMsg('Gagal memuat Speech SDK.');
+      script.onload = () => console.log('Azure Speech SDK loaded');
+      script.onerror = () => setErrorMsg('Gagal memuat Azure Speech SDK.');
       document.body.appendChild(script);
     }
   }, []);
@@ -25,11 +25,11 @@ const useSpeechRecognition = ({ onResult, onError }) => {
 
     try {
       const SpeechSDK = window.SpeechSDK;
-      if (!SpeechSDK) throw new Error('Speech SDK belum tersedia.');
+      if (!SpeechSDK) throw new Error('Azure Speech SDK belum tersedia.');
 
       const speechConfig = SpeechSDK.SpeechConfig.fromSubscription(
-        azureConfig.token, // Menggunakan token dari konfigurasi
-        azureConfig.region // Menggunakan region dari konfigurasi
+        azureConfig.token,
+        azureConfig.region
       );
       speechConfig.speechRecognitionLanguage = 'id-ID';
 
@@ -41,35 +41,35 @@ const useSpeechRecognition = ({ onResult, onError }) => {
           setListening(false);
           if (result.reason === SpeechSDK.ResultReason.RecognizedSpeech) {
             setRecognizedText(result.text);
-            onResult(result.text);
           } else {
-            setRecognizedText('Gagal mengenali suara. Silakan coba lagi.');
+            setErrorMsg('Tidak dapat mengenali suara. Coba lagi.');
           }
           recognizer.close();
         },
-        (error) => {
+        (err) => {
           setListening(false);
-          onError(error.errorDetails || 'Terjadi kesalahan pengenalan suara');
+          setErrorMsg(err.errorDetails || 'Terjadi kesalahan saat mengenali suara');
           recognizer.close();
         }
       );
     } catch (err) {
-      console.error('Speech recognition error:', err);
       setListening(false);
-      onError('Gagal memulai pengenalan suara. Periksa koneksi dan mikrofon Anda.');
+      setErrorMsg('Gagal memulai pengenalan suara. Periksa koneksi dan mikrofon.',err);
     }
   };
 
-  // Cleanup function to stop recognition when the component unmounts
-  useEffect(() => {
-    return () => {
-      if (listening) {
-        setListening(false);
-      }
-    };
-  }, [listening]);
+  const resetTranscript = () => {
+    setRecognizedText('');
+    setErrorMsg('');
+  };
 
-  return { listening, recognizedText, errorMsg, startListening };
+  return {
+    startListening,
+    listening,
+    transcript: recognizedText,
+    errorMsg,
+    resetTranscript
+  };
 };
 
 export default useSpeechRecognition;

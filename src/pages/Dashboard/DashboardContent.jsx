@@ -23,11 +23,10 @@ function DashboardContent() {
 
   // === Speech Recognition ===
   const {
-    transcript,
-    listening,
-    startListening,
-    stopListening,
-    resetTranscript
+  transcript,
+  listening,
+  startListening,
+  resetTranscript,
   } = useSpeechRecognition();
 
   useEffect(() => {
@@ -65,7 +64,6 @@ function DashboardContent() {
             transcript={transcript}
             listening={listening}
             onStartListening={startListening}
-            onStopListening={stopListening}
             onReset={resetTranscript}
           />
           <RekomendasiSuaraModal loading={fetchingRecommendation} recommendation={recommendation} />
