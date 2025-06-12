@@ -21,24 +21,33 @@ function DashboardContent() {
   const [fetchingRecommendation, setFetchingRecommendation] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
+  // === Speech Recognition ===
+  const {
+    transcript,
+    listening,
+    startListening,
+    stopListening,
+    resetTranscript
+  } = useSpeechRecognition();
+
   useEffect(() => {
     fetchHargaCabai(setHargaBulanIni, setHargaBulanLalu, setErrorMsg);
     fetchPrediksiHarga(setHargaPrediksi, setMeanSquaredError, setErrorMsg);
   }, []);
 
   async function handleKirimKeluhan(keluhan) {
-  setErrorMsg('');
-  setRecommendation('');
-  setFetchingRecommendation(true);
+    setErrorMsg('');
+    setRecommendation('');
+    setFetchingRecommendation(true);
 
-  try {
-    await fetchSpeechRecommendation(keluhan, setRecommendation, setErrorMsg, setFetchingRecommendation);
-  } catch (error) {
-    console.error(error);
-    setErrorMsg('Gagal memproses rekomendasi.');
-    setFetchingRecommendation(false);
+    try {
+      await fetchSpeechRecommendation(keluhan, setRecommendation, setErrorMsg, setFetchingRecommendation);
+    } catch (error) {
+      console.error(error);
+      setErrorMsg('Gagal memproses rekomendasi.');
+      setFetchingRecommendation(false);
+    }
   }
-}
 
   return (
     <Container className="py-4" style={{ maxWidth: '1200px' }}>
@@ -51,7 +60,14 @@ function DashboardContent() {
         </Col>
 
         <Col md={6}>
-          <InputKeluhan onKirimKeluhan={handleKirimKeluhan} />
+          <InputKeluhan
+            onKirimKeluhan={handleKirimKeluhan}
+            transcript={transcript}
+            listening={listening}
+            onStartListening={startListening}
+            onStopListening={stopListening}
+            onReset={resetTranscript}
+          />
           <RekomendasiSuaraModal loading={fetchingRecommendation} recommendation={recommendation} />
         </Col>
       </Row>
