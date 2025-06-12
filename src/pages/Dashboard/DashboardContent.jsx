@@ -9,7 +9,7 @@ import fetchSpeechRecommendation from '../../api/fetchSpeechRecommendation';
 import HargaCabaiCard from '../../components/Cards/HargaCabaiCard';
 import PrediksiHargaCard from '../../components/Cards/PrediksiHargaCard';
 import InputKeluhan from '../../components/Input/InputKeluhan';
-import RekomendasiSuaraCard from '../../components/Cards/RekomendasiSuaraCard';
+import RekomendasiSuaraModal from '../../components/Modal/RekomendasiSuaraModal';
 
 function DashboardContent() {
   const [hargaBulanIni, setHargaBulanIni] = useState(null);
@@ -52,7 +52,7 @@ function DashboardContent() {
 
         <Col md={6}>
           <InputKeluhan onKirimKeluhan={handleKirimKeluhan} />
-          <RekomendasiSuaraCard loading={fetchingRecommendation} recommendation={recommendation} />
+          <RekomendasiSuaraModal loading={fetchingRecommendation} recommendation={recommendation} />
         </Col>
       </Row>
     </Container>
