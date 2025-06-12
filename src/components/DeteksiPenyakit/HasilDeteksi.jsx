@@ -34,7 +34,6 @@ function HasilDeteksi({ result }) {
                   }}
                 >
                   <span>{label}</span>
-                  <span>{percent.toFixed(2)}%</span>
                 </div>
                 <ProgressBar
                   now={percent}
