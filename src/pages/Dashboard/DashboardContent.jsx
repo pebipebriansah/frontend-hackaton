@@ -1,5 +1,5 @@
-import { Container, Row, Col, Alert } from 'react-bootstrap';
 import { useEffect, useState } from 'react';
+import { Container, Row, Col, Alert } from 'react-bootstrap';
 
 import useSpeechRecognition from '../../hooks/useSpeechRecognition';
 import fetchHargaCabai from '../../api/fetchHargaCabai';
@@ -20,27 +20,33 @@ function DashboardContent() {
   const [recommendation, setRecommendation] = useState('');
   const [fetchingRecommendation, setFetchingRecommendation] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [keluhan, setKeluhan] = useState(''); // Tambahkan state ini
 
-  // === Speech Recognition ===
   const {
-  transcript,
-  listening,
-  startListening,
-  resetTranscript,
-  } = useSpeechRecognition();
+    startListening,
+    listening,
+  } = useSpeechRecognition({
+    onResult: (text) => setKeluhan(text), // Simpan hasil pengenalan ke input keluhan
+    onError: (err) => setErrorMsg(err),
+  });
 
   useEffect(() => {
     fetchHargaCabai(setHargaBulanIni, setHargaBulanLalu, setErrorMsg);
     fetchPrediksiHarga(setHargaPrediksi, setMeanSquaredError, setErrorMsg);
   }, []);
 
-  async function handleKirimKeluhan(keluhan) {
+  async function handleKirimKeluhan(keluhanInput) {
     setErrorMsg('');
     setRecommendation('');
     setFetchingRecommendation(true);
 
     try {
-      await fetchSpeechRecommendation(keluhan, setRecommendation, setErrorMsg, setFetchingRecommendation);
+      await fetchSpeechRecommendation(
+        keluhanInput,
+        setRecommendation,
+        setErrorMsg,
+        setFetchingRecommendation
+      );
     } catch (error) {
       console.error(error);
       setErrorMsg('Gagal memproses rekomendasi.');
@@ -60,11 +66,11 @@ function DashboardContent() {
 
         <Col md={6}>
           <InputKeluhan
-            onKirimKeluhan={handleKirimKeluhan}
-            transcript={transcript}
+            onKirimKeluhan={() => handleKirimKeluhan(keluhan)}
+            keluhan={keluhan}
+            setKeluhan={setKeluhan}
+            startListening={startListening}
             listening={listening}
-            onStartListening={startListening}
-            onReset={resetTranscript}
           />
           <RekomendasiSuaraModal loading={fetchingRecommendation} recommendation={recommendation} />
         </Col>
