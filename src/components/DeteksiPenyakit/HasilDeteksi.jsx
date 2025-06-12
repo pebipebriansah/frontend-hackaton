@@ -13,7 +13,7 @@ function HasilDeteksi({ result }) {
           <span style={{ color: '#2c3e50' }}>{result.data.label}</span>
         </Card.Text>
 
-        <pre>{JSON.stringify(result.data.confidences, null, 2)}</pre>
+        {/* <pre>{JSON.stringify(result.data.confidences, null, 2)}</pre> */}
 
         {result.data.confidences && result.data.confidences.length > 0 ? (
           result.data.confidences.map(({ label, confidence }) => {
