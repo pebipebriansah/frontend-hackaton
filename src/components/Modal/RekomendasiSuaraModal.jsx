@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Modal, Button, Spinner } from 'react-bootstrap';
+import ReactMarkdown from "react-markdown";
 
 export default function RekomendasiSuaraModal({ loading, recommendation }) {
   const [show, setShow] = useState(false);
@@ -34,7 +35,7 @@ export default function RekomendasiSuaraModal({ loading, recommendation }) {
             </div>
           ) : (
             <div style={{ whiteSpace: 'pre-wrap' }}>
-              {recommendation || 'Belum ada rekomendasi.'}
+              <ReactMarkdown>{recommendation || 'Belum ada rekomendasi.'}</ReactMarkdown>
             </div>
           )}
         </Modal.Body>
