@@ -4,11 +4,16 @@ import ReactMarkdown from "react-markdown";
 
 export default function RekomendasiSuaraModal({ loading, recommendation }) {
   const [show, setShow] = useState(false);
+  const [cleanedRecommendation, setCleanedRecommendation] = useState('');
 
   useEffect(() => {
     // Buka modal otomatis jika ada rekomendasi baru
     if (recommendation && !loading) {
       setShow(true);
+
+      // Bersihkan spasi berlebihan
+      const cleaned = recommendation.replace(/\n{3,}/g, '\n\n');
+      setCleanedRecommendation(cleaned);
     }
   }, [recommendation, loading]);
 
@@ -35,7 +40,7 @@ export default function RekomendasiSuaraModal({ loading, recommendation }) {
             </div>
           ) : (
             <div style={{ whiteSpace: 'pre-wrap' }}>
-              <ReactMarkdown>{recommendation || 'Belum ada rekomendasi.'}</ReactMarkdown>
+              <ReactMarkdown>{cleanedRecommendation || 'Belum ada rekomendasi.'}</ReactMarkdown>
             </div>
           )}
         </Modal.Body>
