@@ -48,9 +48,7 @@ function DeteksiPenyakitContent() {
           Memproses gambar...
         </Alert>
       )}
-
-      <KameraVideo videoRef={videoRef} />
-
+      {isCameraOn && !imageSrc && <KameraVideo videoRef={videoRef} />}
       <Row>
         {imageSrc && (
           <Col md={6}>
