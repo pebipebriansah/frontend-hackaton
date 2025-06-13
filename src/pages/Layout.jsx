@@ -14,6 +14,7 @@ import { Link, useNavigate } from 'react-router-dom';
 const API_KEY = '1c5b30d80951b00f89c53bf2d5edc088';
 
 function Layout({ children }) {
+  const navigate = useNavigate();
   const [showSidebar, setShowSidebar] = useState(false);
   const [lokasi, setLokasi] = useState({
     label: 'Menunggu GPS...',
@@ -25,16 +26,21 @@ function Layout({ children }) {
   const [error, setError] = useState(null);
   const [gpsAktif, setGpsAktif] = useState(false);
 
-  const navigate = useNavigate();
-
-  const toggleSidebar = () => setShowSidebar((prev) => !prev);
-
   const namaUser = localStorage.getItem('nama_petani') || 'Petani';
   const idPetani = localStorage.getItem('id_petani');
+
+  const toggleSidebar = () => setShowSidebar(prev => !prev);
 
   const handleLogout = () => {
     localStorage.clear();
     navigate('/Login');
+  };
+
+  const getCurahHujanDesc = (value) => {
+    if (value === 0) return 'Tidak ada hujan';
+    if (value < 2.5) return 'Hujan ringan';
+    if (value < 7.6) return 'Hujan sedang';
+    return 'Hujan lebat';
   };
 
   const getCurahHujan = async (lat, lon) => {
@@ -46,10 +52,10 @@ function Layout({ children }) {
         `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`
       );
       if (!res.ok) throw new Error('Gagal mengambil data cuaca');
-      const data = await res.json();
 
+      const data = await res.json();
       const hariIni = new Date().toISOString().split('T')[0];
-      const dataHariIni = data.list.find((d) => d.dt_txt.startsWith(hariIni));
+      const dataHariIni = data.list.find(d => d.dt_txt.startsWith(hariIni));
       const rain = dataHariIni?.rain?.['3h'] || 0;
 
       setCurahHujan(rain);
@@ -58,7 +64,7 @@ function Layout({ children }) {
         await simpanDataCuaca(rain, lat, lon, lokasi.label);
       }
     } catch (err) {
-      setError(err.message || 'Gagal mengambil data cuaca');
+      setError(err.message || 'Terjadi kesalahan saat mengambil data cuaca');
     } finally {
       setLoadingCuaca(false);
     }
@@ -68,7 +74,7 @@ function Layout({ children }) {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        setError('Token tidak ditemukan, silakan login ulang');
+        setError('Token tidak ditemukan. Silakan login ulang.');
         return;
       }
 
@@ -95,7 +101,7 @@ function Layout({ children }) {
         throw new Error(errData.message || 'Gagal menyimpan data cuaca');
       }
 
-      console.log('Data cuaca berhasil disimpan ke backend');
+      console.log('Data cuaca berhasil disimpan.');
     } catch (err) {
       setError(err.message);
     }
@@ -121,17 +127,12 @@ function Layout({ children }) {
               },
             }
           );
-          if (!res.ok) throw new Error('Gagal mengambil alamat dari koordinat GPS');
+          if (!res.ok) throw new Error('Gagal mengambil alamat dari GPS');
           const data = await res.json();
 
           const address = data.address || {};
           const label =
-            address.city ||
-            address.town ||
-            address.village ||
-            address.county ||
-            data.display_name ||
-            'Lokasi GPS';
+            address.city || address.town || address.village || address.county || data.display_name;
 
           setLokasi({ label, lat: latitude, lon: longitude });
           setGpsAktif(true);
@@ -149,13 +150,6 @@ function Layout({ children }) {
     }
   }, [gpsAktif, lokasi]);
 
-  const getCurahHujanDesc = (value) => {
-    if (value === 0) return 'Tidak ada hujan';
-    if (value < 2.5) return 'Hujan ringan';
-    if (value < 7.6) return 'Hujan sedang';
-    return 'Hujan lebat';
-  };
-
   return (
     <>
       {/* Navbar */}
@@ -166,14 +160,11 @@ function Layout({ children }) {
         fixed="top"
         style={{
           boxShadow: '0 2px 10px rgb(0 0 0 / 0.15)',
-          backdropFilter: 'blur(12px)',
           zIndex: 1040,
           padding: '0.6rem 1rem',
-          fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
         }}
       >
-        <Container fluid className="d-flex align-items-center">
-          {/* Tombol Menu Sidebar */}
+        <Container fluid>
           <Button
             variant="outline-light"
             onClick={toggleSidebar}
@@ -184,30 +175,24 @@ function Layout({ children }) {
             ☰
           </Button>
 
-          {/* Nama App */}
-          <Navbar.Brand
-            className="fw-bold"
-            style={{ fontSize: '1.7rem', letterSpacing: 1, userSelect: 'none' }}
-          >
+          <Navbar.Brand className="fw-bold" style={{ fontSize: '1.7rem' }}>
             Cengek
           </Navbar.Brand>
 
           <div className="flex-grow-1" />
 
-          {/* Curah Hujan dan GPS Button */}
+          {/* Curah Hujan */}
           <Form className="d-flex align-items-center gap-3 me-2">
             {curahHujan !== null && !loadingCuaca && (
               <div
+                className="text-light"
                 style={{
-                  fontSize: '1rem',
-                  fontWeight: '600',
-                  color: '#d4edda',
                   backgroundColor: 'rgba(0, 100, 0, 0.7)',
                   padding: '6px 12px',
                   borderRadius: 12,
-                  userSelect: 'none',
                   minWidth: 180,
                   textAlign: 'center',
+                  fontWeight: 600,
                 }}
                 title={`Curah hujan saat ini di lokasi ${lokasi.label}`}
               >
@@ -217,37 +202,37 @@ function Layout({ children }) {
             <Button
               variant="outline-light"
               size="md"
-              style={{ fontWeight: '600', minWidth: 140, borderRadius: 8 }}
+              style={{ fontWeight: 600, minWidth: 140, borderRadius: 8 }}
               onClick={gunakanGPS}
               disabled={loadingCuaca}
-              aria-label="Cari lokasi dengan GPS"
             >
-              {loadingCuaca ? 'Memuat...' : '📍 Cari Lokasi Saya'}
+              {loadingCuaca ? 'Memuat...' : '📍 Lokasi Saya'}
             </Button>
           </Form>
 
-          {/* Dropdown Nama User & Logout */}
+          {/* Tombol Android App */}
+          <Button
+            variant="outline-warning"
+            size="sm"
+            className="me-2 fw-semibold"
+            style={{ borderRadius: 8, fontSize: '0.9rem' }}
+            onClick={() =>
+              window.open('https://play.google.com/store/apps/details?id=com.cengek.app', '_blank')
+            }
+          >
+            📱 Android App
+          </Button>
+
+          {/* Dropdown User */}
           <Dropdown align="end" className="me-1">
             <Dropdown.Toggle
               variant="outline-light"
-              id="dropdown-basic"
-              style={{
-                fontWeight: '600',
-                cursor: 'pointer',
-                minWidth: 100,
-                borderRadius: 8,
-                userSelect: 'none',
-              }}
+              style={{ fontWeight: 600, minWidth: 100, borderRadius: 8 }}
             >
               👩‍🌾 {namaUser}
             </Dropdown.Toggle>
-
-            <Dropdown.Menu style={{ minWidth: 120 }}>
-              <Dropdown.Item
-                onClick={handleLogout}
-                className="text-danger"
-                style={{ fontWeight: '600' }}
-              >
+            <Dropdown.Menu>
+              <Dropdown.Item onClick={handleLogout} className="text-danger fw-semibold">
                 Keluar
               </Dropdown.Item>
             </Dropdown.Menu>
@@ -256,48 +241,29 @@ function Layout({ children }) {
       </Navbar>
 
       {/* Sidebar */}
-      <Offcanvas
-        show={showSidebar}
-        onHide={toggleSidebar}
-        backdrop={true}
-        scroll={false}
-        style={{ width: '260px' }}
-      >
+      <Offcanvas show={showSidebar} onHide={toggleSidebar} style={{ width: 260 }}>
         <Offcanvas.Header closeButton>
-          <Offcanvas.Title style={{ fontWeight: '700', fontSize: '1.4rem' }}>Menu</Offcanvas.Title>
+          <Offcanvas.Title style={{ fontWeight: 700, fontSize: '1.4rem' }}>Menu</Offcanvas.Title>
         </Offcanvas.Header>
         <Offcanvas.Body>
           <Nav className="flex-column fs-5" style={{ gap: '1.2rem' }}>
-            <Nav.Link
-              as={Link}
-              to="/dashboard"
-              onClick={toggleSidebar}
-              style={{ padding: '12px 16px', borderRadius: 8 }}
-              className="text-success fw-semibold"
-            >
+            <Nav.Link as={Link} to="/dashboard" onClick={toggleSidebar} className="text-success fw-semibold">
               🏠 Dashboard
             </Nav.Link>
-            <Nav.Link
-              as={Link}
-              to="/deteksi-penyakit"
-              onClick={toggleSidebar}
-              style={{ padding: '12px 16px', borderRadius: 8 }}
-              className="text-success fw-semibold"
-            >
+            <Nav.Link as={Link} to="/deteksi-penyakit" onClick={toggleSidebar} className="text-success fw-semibold">
               🐞 Deteksi Penyakit
             </Nav.Link>
           </Nav>
         </Offcanvas.Body>
       </Offcanvas>
 
-      {/* Konten Utama */}
+      {/* Main Content */}
       <main
         style={{
-          marginTop: '70px',
+          marginTop: 70,
           padding: '2rem 3rem',
-          minHeight: 'calc(100vh - 70px - 50px)',
+          minHeight: 'calc(100vh - 120px)',
           backgroundColor: '#e9f5ea',
-          fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
         }}
       >
         <Container fluid>
@@ -310,28 +276,32 @@ function Layout({ children }) {
       {/* Footer */}
       <footer
         style={{
-          height: '50px',
+          height: 50,
           backgroundColor: '#d4edda',
           borderTop: '1px solid #a8d5a8',
           textAlign: 'center',
           lineHeight: '50px',
-          color: '#2e7d32',
-          fontWeight: '600',
+          fontWeight: 600,
           fontSize: '1rem',
-          userSelect: 'none',
-          fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+          color: '#2e7d32',
         }}
       >
         &copy; 2025 Cengek — Semua hak dilindungi.
       </footer>
 
-      {/* Error alert */}
+      {/* Error Alert */}
       {error && (
         <Alert
           variant="danger"
           onClose={() => setError(null)}
           dismissible
-          style={{ position: 'fixed', bottom: 10, right: 10, minWidth: 280, fontSize: '0.9rem' }}
+          style={{
+            position: 'fixed',
+            bottom: 10,
+            right: 10,
+            minWidth: 280,
+            fontSize: '0.9rem',
+          }}
         >
           ⚠️ {error}
         </Alert>
