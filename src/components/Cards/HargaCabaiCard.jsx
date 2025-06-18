@@ -1,4 +1,5 @@
 import BaseCard from './BaseCard';
+import cabaiImages from './assets/cabaiImages'; // Pastikan untuk mengimpor gambar
 
 function formatRupiah(number) {
   if (typeof number !== 'number') return '-';
@@ -27,6 +28,11 @@ export default function PrediksiHargaCabaiList({ dataCabai }) {
               borderRadius: '16px',
             }}
           >
+            <img 
+              src={cabaiImages[cabai.nama]} // Mengambil gambar berdasarkan nama cabai
+              alt={cabai.nama}
+              style={{ width: '100%', borderRadius: '16px 16px 0 0' }} // Gambar dengan styling
+            />
             <div className="mb-3">
               <small className="text-muted">Harga Bulan Ini</small>
               <div className="fs-4 fw-bold text-primary">
