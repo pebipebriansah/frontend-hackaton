@@ -1,5 +1,5 @@
 import BaseCard from './BaseCard';
-import cabaiImages from '../../../dist/assets/cabaiImages';
+import cabaiImages from '../../assets/cabaiImages'; // Import gambar cabai
 
 function formatRupiah(number) {
   if (typeof number !== 'number') return '-';
