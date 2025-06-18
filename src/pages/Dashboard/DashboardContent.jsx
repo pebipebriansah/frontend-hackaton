@@ -3,36 +3,34 @@ import { Container, Row, Col, Alert } from 'react-bootstrap';
 
 import useSpeechRecognition from '../../hooks/useSpeechRecognition';
 import fetchHargaCabai from '../../api/fetchHargaCabai';
-import fetchPrediksiHarga from '../../api/fetchPrediksiHarga';
+// import fetchPrediksiHarga from '../../api/fetchPrediksiHarga'; // tidak dipakai lagi
 import fetchSpeechRecommendation from '../../api/fetchSpeechRecommendation';
 
 import HargaCabaiCard from '../../components/Cards/HargaCabaiCard';
-import PrediksiHargaCard from '../../components/Cards/PrediksiHargaCard';
+// import PrediksiHargaCard from '../../components/Cards/PrediksiHargaCard'; // tidak dipakai lagi
 import InputKeluhan from '../../components/Input/InputKeluhan';
 import RekomendasiSuaraModal from '../../components/Modal/RekomendasiSuaraModal';
 
 function DashboardContent() {
   const [hargaBulanIni, setHargaBulanIni] = useState(null);
   const [hargaBulanLalu, setHargaBulanLalu] = useState(null);
-  const [hargaPrediksi, setHargaPrediksi] = useState(null);
-  const [meanSquaredError, setMeanSquaredError] = useState(null);
 
   const [recommendation, setRecommendation] = useState('');
   const [fetchingRecommendation, setFetchingRecommendation] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  const [keluhan, setKeluhan] = useState(''); // Tambahkan state ini
+  const [keluhan, setKeluhan] = useState('');
 
   const {
     startListening,
     listening,
   } = useSpeechRecognition({
-    onResult: (text) => setKeluhan(text), // Simpan hasil pengenalan ke input keluhan
+    onResult: (text) => setKeluhan(text),
     onError: (err) => setErrorMsg(err),
   });
 
   useEffect(() => {
     fetchHargaCabai(setHargaBulanIni, setHargaBulanLalu, setErrorMsg);
-    fetchPrediksiHarga(setHargaPrediksi, setMeanSquaredError, setErrorMsg);
+    // fetchPrediksiHarga(...) dihapus
   }, []);
 
   async function handleKirimKeluhan(keluhanInput) {
@@ -61,7 +59,7 @@ function DashboardContent() {
       <Row className="mb-4">
         <Col md={6}>
           <HargaCabaiCard hargaBulanIni={hargaBulanIni} hargaBulanLalu={hargaBulanLalu} />
-          <PrediksiHargaCard hargaPrediksi={hargaPrediksi} meanSquaredError={meanSquaredError} />
+          {/* PrediksiHargaCard dihapus */}
         </Col>
 
         <Col md={6}>
